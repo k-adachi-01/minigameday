@@ -36,13 +36,15 @@ export class TargetApp extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    // 3層に対応するサブネット: public(ALB) / app(Fargate) / data(Aurora)
+    // 3層に対応するサブネット: public(ALB+Fargate) / data(Aurora 隔離)
+    // PoC Sandbox 等で SCP が CreateNatGateway を deny するため NAT は作らない。
+    // アプリ層は public サブネット + assignPublicIp で ECR/Secrets/CW へ出る
+    // (学習用トレードオフ。本番の private+NAT 構成とは意図的に異なる)。
     const vpc = new ec2.Vpc(this, "Vpc", {
       maxAzs: 2,
-      natGateways: 1, // コスト抑制: NAT Gateway は 1 つに
+      natGateways: 0,
       subnetConfiguration: [
         { name: "public", subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
-        { name: "app", subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, cidrMask: 24 },
         { name: "data", subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 },
       ],
     });
@@ -111,6 +113,9 @@ export class TargetApp extends Construct {
       desiredCount: this.serviceDesiredCount, // 1 タスク落としても冗長性を観察できるよう 2
       minHealthyPercent: 50, // デプロイ/障害時に最低 1 タスクは維持
       circuitBreaker: { rollback: true }, // 起動失敗を素早く検知してロールバック
+      // NAT 無し VPC のため public サブネット + パブリック IP で外部 API に出る
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true,
       // サービスのタグをタスクに伝播させ、FIS がタグで対象を選べるようにする
       propagateTags: ecs.PropagatedTagSource.SERVICE,
     });

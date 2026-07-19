@@ -28,16 +28,18 @@ pnpm exec cdk bootstrap        # 初回のみ (アカウント/リージョン�
 > `ContainerImageBuild` で deploy 時に CodeBuild 上で行うため、**ローカルに Docker は不要**
 > (synth するマシンの CPU アーキテクチャにも依存しない)。
 
+個人検証で **scenario-01 / 05 だけ**を一巡する手順: [docs/user-playbook-01-05.md](docs/user-playbook-01-05.md)
+
 ## GameDay の流れ(6 フェーズ)
 
 ### フェーズ1: 環境構築 & ベースライン確認
 
 ```bash
-npm run deploy                 # cdk deploy --all
+pnpm deploy                 # cdk deploy --all
 #    出力 GameDay.TargetAppAlbUrl をブラウザで開いて正常 (200) を確認
 
 # ★ 注入前ベースライン (振り返りの説得力の土台):
-npm run drift                  # cdk drift が "No drift detected" であること
+pnpm drift                  # cdk drift が "No drift detected" であること
 #    → 出ていたら先に解消するか「既存ドリフト」として記録。
 #      こうしておくと実験後のドリフトを "実験(や参加者の対応)起因" と断定できる。
 aws synthetics get-canary --name gameday-top --query "Canary.Status.State"  # RUNNING を確認
@@ -45,7 +47,7 @@ aws synthetics get-canary --name gameday-top --query "Canary.Status.State"  # RU
 
 # (別ターミナル) 当日ダッシュボード — スコア表 / 検知・復旧チャート / KPT
 #    dashboard/public/data/gameday.json の編集で画面に即時反映
-npm run dashboard
+pnpm dashboard
 ```
 
 ### フェーズ2: シナリオ生成(Claude Code)

@@ -1,18 +1,14 @@
 {
   "event": {
     "title": "ミニ GameDay",
-    "date": "2026-07-18"
+    "date": "2026-07-19"
   },
   "systems": [
     {
       "id": "gameday-main",
       "name": "お題: 3 層 Web アプリ",
-      "summary": "GameDay のお題となる 3 層 Web アプリ。トップページ \"/\" は Aurora に SELECT 1 を打ち、可否で 200/503 を返す。VPC は 2 AZ で、各層が専用サブネット (public / app / data) に分かれる。",
-      "scenarioIds": [
-        "scenario-01",
-        "scenario-02",
-        "scenario-05"
-      ],
+      "summary": "GameDay のお題となる 3 層 Web アプリ。トップページ \"/\" は Aurora に SELECT 1 を打ち、可否で 200/503 を返す。PoC Sandbox では SCP により NAT Gateway が使えないため、ALB+Fargate は public サブネット (assignPublicIp)、Aurora は隔離サブネット。",
+      "scenarioIds": ["scenario-01", "scenario-05"],
       "tiers": [
         {
           "name": "利用者・外形監視",
@@ -30,25 +26,19 @@
           ]
         },
         {
-          "name": "Web/LB 層 — public サブネット",
+          "name": "Web/LB・アプリ層 — public サブネット",
           "icon": "public-subnet",
           "nodes": [
             {
               "service": "ALB",
               "icon": "alb",
               "label": "internet-facing / HTTP:80。ヘルスチェックは /healthz (DB 非依存)"
-            }
-          ]
-        },
-        {
-          "name": "アプリ層 — app サブネット",
-          "icon": "private-subnet",
-          "nodes": [
+            },
             {
               "service": "ECS Fargate",
               "icon": "fargate",
               "count": 2,
-              "label": "Node アプリ。desiredCount=2 / minHealthyPercent=50 (1 タスク落ちても継続)"
+              "label": "Node アプリ。desiredCount=2 / public IP (NAT 無し sandbox 向け)"
             }
           ]
         },
@@ -66,17 +56,36 @@
       ],
       "notes": [
         "判断の起点は canary: 緑のまま = ユーザー影響なし。主要メトリクスは CloudWatch ダッシュボード gameday-review に揃っている",
-        "\"/\" は読み取り (SELECT 1) だけなので、書き込み断は canary では見えない (scenario-02 の学び)",
+        "デプロイ後は Outputs の FIS テンプレート ID を injects[].experimentTemplateId に書き換えること",
         "全 FIS 実験の安全装置としてアラーム gameday-5xx-stop-condition (ELB+Target 5xx > 10/分) が停止条件に入っている"
       ]
     }
   ],
   "injects": [
     {
+      "id": "r1-stop-task",
+      "scenarioId": "scenario-01",
+      "title": "Fargate タスク 1 つ停止（観察）",
+      "round": 1,
+      "instruction": "自己回復する。静観が正解になりうる。canary が赤に張り付かないかを見る。",
+      "maxScore": 100,
+      "hints": [
+        {
+          "id": "hr1-1",
+          "label": "方針",
+          "cost": 5,
+          "text": "ECS RunningTaskCount と canary 成功率を見る。勝手に戻るなら静観でよい。"
+        }
+      ],
+      "experimentTemplateId": "EXT3dkD9TFYGxnB2",
+      "status": "pending"
+    },
+    {
       "id": "r2-scale",
       "scenarioId": "scenario-05",
       "title": "Web アプリ全断 (要・手動復旧)",
-      "instruction": "Fargate が desiredCount=0 に落とされる。自己回復しないため、原因を特定して desiredCount を 2 に戻すまでサイトは全断のまま。",
+      "round": 2,
+      "instruction": "Fargate が desiredCount=0 に落とされる。自己回復しないため、desiredCount を 2 に戻すまでサイトは全断のまま。",
       "maxScore": 100,
       "hints": [
         {
@@ -89,10 +98,10 @@
           "id": "hr2-2",
           "label": "具体手順",
           "cost": 20,
-          "text": "aws ecs update-service --desired-count 2 で戻す。"
+          "text": "aws ecs update-service --cluster <cluster> --service <service> --desired-count 2 で戻す。"
         }
       ],
-      "experimentTemplateId": "EXTDNmsZ4yUftuD7e",
+      "experimentTemplateId": "EXT2ApbXeMfrGhyA",
       "status": "pending"
     }
   ],

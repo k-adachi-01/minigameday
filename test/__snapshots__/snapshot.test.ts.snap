@@ -5723,7 +5723,7 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
         ],
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {
-            "AssignPublicIp": "DISABLED",
+            "AssignPublicIp": "ENABLED",
             "SecurityGroups": [
               {
                 "Fn::GetAtt": [
@@ -5734,10 +5734,10 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
             ],
             "Subnets": [
               {
-                "Ref": "TargetAppVpcappSubnet1SubnetE678056E",
+                "Ref": "TargetAppVpcpublicSubnet1SubnetE37C2DC0",
               },
               {
-                "Ref": "TargetAppVpcappSubnet2Subnet2EC6CFCE",
+                "Ref": "TargetAppVpcpublicSubnet2Subnet4D5C37A9",
               },
             ],
           },
@@ -6073,144 +6073,6 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
       },
       "Type": "AWS::EC2::VPCGatewayAttachment",
     },
-    "TargetAppVpcappSubnet1DefaultRoute5ED51B23": {
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "NatGatewayId": {
-          "Ref": "TargetAppVpcpublicSubnet1NATGateway9B760092",
-        },
-        "RouteTableId": {
-          "Ref": "TargetAppVpcappSubnet1RouteTable7A05FBB1",
-        },
-      },
-      "Type": "AWS::EC2::Route",
-    },
-    "TargetAppVpcappSubnet1RouteTable7A05FBB1": {
-      "Properties": {
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/appSubnet1",
-          },
-        ],
-        "VpcId": {
-          "Ref": "TargetAppVpcCACC8559",
-        },
-      },
-      "Type": "AWS::EC2::RouteTable",
-    },
-    "TargetAppVpcappSubnet1RouteTableAssociationC4E6ABF5": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "TargetAppVpcappSubnet1RouteTable7A05FBB1",
-        },
-        "SubnetId": {
-          "Ref": "TargetAppVpcappSubnet1SubnetE678056E",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "TargetAppVpcappSubnet1SubnetE678056E": {
-      "Properties": {
-        "AvailabilityZone": {
-          "Fn::Select": [
-            0,
-            {
-              "Fn::GetAZs": "",
-            },
-          ],
-        },
-        "CidrBlock": "10.0.2.0/24",
-        "MapPublicIpOnLaunch": false,
-        "Tags": [
-          {
-            "Key": "aws-cdk:subnet-name",
-            "Value": "app",
-          },
-          {
-            "Key": "aws-cdk:subnet-type",
-            "Value": "Private",
-          },
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/appSubnet1",
-          },
-        ],
-        "VpcId": {
-          "Ref": "TargetAppVpcCACC8559",
-        },
-      },
-      "Type": "AWS::EC2::Subnet",
-    },
-    "TargetAppVpcappSubnet2DefaultRoute3353B7B1": {
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "NatGatewayId": {
-          "Ref": "TargetAppVpcpublicSubnet1NATGateway9B760092",
-        },
-        "RouteTableId": {
-          "Ref": "TargetAppVpcappSubnet2RouteTable95F666C0",
-        },
-      },
-      "Type": "AWS::EC2::Route",
-    },
-    "TargetAppVpcappSubnet2RouteTable95F666C0": {
-      "Properties": {
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/appSubnet2",
-          },
-        ],
-        "VpcId": {
-          "Ref": "TargetAppVpcCACC8559",
-        },
-      },
-      "Type": "AWS::EC2::RouteTable",
-    },
-    "TargetAppVpcappSubnet2RouteTableAssociationEA39AD7C": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "TargetAppVpcappSubnet2RouteTable95F666C0",
-        },
-        "SubnetId": {
-          "Ref": "TargetAppVpcappSubnet2Subnet2EC6CFCE",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "TargetAppVpcappSubnet2Subnet2EC6CFCE": {
-      "Properties": {
-        "AvailabilityZone": {
-          "Fn::Select": [
-            1,
-            {
-              "Fn::GetAZs": "",
-            },
-          ],
-        },
-        "CidrBlock": "10.0.3.0/24",
-        "MapPublicIpOnLaunch": false,
-        "Tags": [
-          {
-            "Key": "aws-cdk:subnet-name",
-            "Value": "app",
-          },
-          {
-            "Key": "aws-cdk:subnet-type",
-            "Value": "Private",
-          },
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/appSubnet2",
-          },
-        ],
-        "VpcId": {
-          "Ref": "TargetAppVpcCACC8559",
-        },
-      },
-      "Type": "AWS::EC2::Subnet",
-    },
     "TargetAppVpcdataSubnet1RouteTable829CE27E": {
       "Properties": {
         "Tags": [
@@ -6246,7 +6108,7 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
             },
           ],
         },
-        "CidrBlock": "10.0.4.0/24",
+        "CidrBlock": "10.0.2.0/24",
         "MapPublicIpOnLaunch": false,
         "Tags": [
           {
@@ -6303,7 +6165,7 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
             },
           ],
         },
-        "CidrBlock": "10.0.5.0/24",
+        "CidrBlock": "10.0.3.0/24",
         "MapPublicIpOnLaunch": false,
         "Tags": [
           {
@@ -6339,42 +6201,6 @@ exports[`snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り�
         },
       },
       "Type": "AWS::EC2::Route",
-    },
-    "TargetAppVpcpublicSubnet1EIP2563A561": {
-      "Properties": {
-        "Domain": "vpc",
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/publicSubnet1",
-          },
-        ],
-      },
-      "Type": "AWS::EC2::EIP",
-    },
-    "TargetAppVpcpublicSubnet1NATGateway9B760092": {
-      "DependsOn": [
-        "TargetAppVpcpublicSubnet1DefaultRouteDB1EA738",
-        "TargetAppVpcpublicSubnet1RouteTableAssociation848908E1",
-      ],
-      "Properties": {
-        "AllocationId": {
-          "Fn::GetAtt": [
-            "TargetAppVpcpublicSubnet1EIP2563A561",
-            "AllocationId",
-          ],
-        },
-        "SubnetId": {
-          "Ref": "TargetAppVpcpublicSubnet1SubnetE37C2DC0",
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "GameDay/TargetApp/Vpc/publicSubnet1",
-          },
-        ],
-      },
-      "Type": "AWS::EC2::NatGateway",
     },
     "TargetAppVpcpublicSubnet1RouteTableAssociation848908E1": {
       "Properties": {

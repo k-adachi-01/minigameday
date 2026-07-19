@@ -1,28 +1,28 @@
-import { Fragment } from 'react';
-import type { Inject, InjectStatus, RoundDef, ScoringConfig } from './types';
-import { fmtMinutes } from './types';
+import { Fragment } from "react";
+import type { Inject, InjectStatus, RoundDef, ScoringConfig } from "./types";
+import { fmtMinutes } from "./types";
 import {
   DEFAULT_SCORING,
   autoScoreBreakdown,
   effectiveScore,
   hintPenalty,
   resolveScore,
-} from './scoring';
-import Hints from './Hints';
+} from "./scoring";
+import Hints from "./Hints";
 
 const STATUS: Record<InjectStatus, { label: string; icon: string; color: string }> = {
-  success: { label: '成功', icon: '✓', color: 'var(--status-good)' },
-  partial: { label: '一部達成', icon: '▲', color: 'var(--status-warning)' },
-  failed: { label: '失敗', icon: '✕', color: 'var(--status-critical)' },
-  pending: { label: '進行中', icon: '…', color: 'var(--text-muted)' },
+  success: { label: "成功", icon: "✓", color: "var(--status-good)" },
+  partial: { label: "一部達成", icon: "▲", color: "var(--status-warning)" },
+  failed: { label: "失敗", icon: "✕", color: "var(--status-critical)" },
+  pending: { label: "進行中", icon: "…", color: "var(--text-muted)" },
   // ライブ状態 (gameEventsSync が導出)
-  armed: { label: '実験進行中', icon: '⏱', color: 'var(--text-muted)' },
-  impacted: { label: '影響発生中', icon: '⚠', color: 'var(--status-critical)' },
-  recovered: { label: '復旧済み', icon: '✓', color: 'var(--status-good)' },
+  armed: { label: "実験進行中", icon: "⏱", color: "var(--text-muted)" },
+  impacted: { label: "影響発生中", icon: "⚠", color: "var(--status-critical)" },
+  recovered: { label: "復旧済み", icon: "✓", color: "var(--status-good)" },
 };
 
 function StatusChip({ status }: { status?: InjectStatus }) {
-  const meta = STATUS[status ?? 'pending'] ?? STATUS.pending;
+  const meta = STATUS[status ?? "pending"] ?? STATUS.pending;
   return (
     <span className="chip">
       <span className="dot" style={{ background: meta.color }} />
@@ -32,7 +32,7 @@ function StatusChip({ status }: { status?: InjectStatus }) {
 }
 
 function Minutes({ value }: { value?: number }) {
-  return <>{typeof value === 'number' ? `${fmtMinutes(value)} 分` : '—'}</>;
+  return <>{typeof value === "number" ? `${fmtMinutes(value)} 分` : "—"}</>;
 }
 
 function ScoreCell({
@@ -53,7 +53,7 @@ function ScoreCell({
   const pct = Math.max(0, Math.min(100, (eff / inject.maxScore) * 100));
   // 自動採点のときは内訳を小書きで示す (scoreOverride 時は手動裁定なので出さない)
   const breakdown =
-    typeof inject.scoreOverride === 'number' ? undefined : autoScoreBreakdown(inject, scoring);
+    typeof inject.scoreOverride === "number" ? undefined : autoScoreBreakdown(inject, scoring);
   return (
     <>
       <div>
@@ -87,13 +87,13 @@ function InjectRow({
   scoring: ScoringConfig;
 }) {
   const detailRows = [
-    ['指示 (インジェクト)', inject.instruction],
-    ['チームの対応', inject.response],
-    ['採点メモ', inject.notes],
+    ["指示 (インジェクト)", inject.instruction],
+    ["チームの対応", inject.response],
+    ["採点メモ", inject.notes],
   ].filter((r): r is [string, string] => Boolean(r[1]));
   return (
     <tr>
-      <td className="time">{inject.time ?? '—'}</td>
+      <td className="time">{inject.time ?? "—"}</td>
       <td>
         <div>
           <span className="inject-title">{inject.title}</span>
@@ -122,8 +122,12 @@ function InjectRow({
           </button>
         )}
       </td>
-      <td className="num"><Minutes value={inject.detectionMinutes} /></td>
-      <td className="num"><Minutes value={inject.recoveryMinutes} /></td>
+      <td className="num">
+        <Minutes value={inject.detectionMinutes} />
+      </td>
+      <td className="num">
+        <Minutes value={inject.recoveryMinutes} />
+      </td>
       <td className="score-cell">
         <ScoreCell inject={inject} revealed={revealed} scoring={scoring} />
       </td>
@@ -162,16 +166,18 @@ export default function ScoreTable({
   scoring?: ScoringConfig;
 }) {
   // ラウンドが 1 つも設定されていなければグループ見出しは出さず従来どおりフラット表示。
-  const hasRounds = injects.some((i) => typeof i.round === 'number');
+  const hasRounds = injects.some((i) => typeof i.round === "number");
   // 出現順を保ったラウンドのキー列 (未分類は最後にまとめる)
   const roundKeys: (number | null)[] = [];
   for (const i of injects) {
-    const key = typeof i.round === 'number' ? i.round : null;
+    const key = typeof i.round === "number" ? i.round : null;
     if (!roundKeys.includes(key)) roundKeys.push(key);
   }
   roundKeys.sort((a, b) => (a ?? Infinity) - (b ?? Infinity));
   const titleOf = (round: number | null) =>
-    round === null ? 'ラウンド未分類' : rounds?.find((r) => r.round === round)?.title ?? `ラウンド ${round}`;
+    round === null
+      ? "ラウンド未分類"
+      : (rounds?.find((r) => r.round === round)?.title ?? `ラウンド ${round}`);
 
   const rowsFor = (list: Inject[]) =>
     list.map((inject) => (
@@ -193,21 +199,31 @@ export default function ScoreTable({
             <th scope="col">時刻</th>
             <th scope="col">インジェクト</th>
             <th scope="col">結果</th>
-            <th scope="col" className="num">検知</th>
-            <th scope="col" className="num">復旧</th>
-            <th scope="col" className="score-col">スコア</th>
+            <th scope="col" className="num">
+              検知
+            </th>
+            <th scope="col" className="num">
+              復旧
+            </th>
+            <th scope="col" className="score-col">
+              スコア
+            </th>
           </tr>
         </thead>
         <tbody>
           {injects.length === 0 && (
             <tr>
-              <td className="kpt-empty" colSpan={6}>該当するインジェクトがありません</td>
+              <td className="kpt-empty" colSpan={6}>
+                該当するインジェクトがありません
+              </td>
             </tr>
           )}
           {!hasRounds && rowsFor(injects)}
           {hasRounds &&
             roundKeys.map((key) => {
-              const list = injects.filter((i) => (typeof i.round === 'number' ? i.round : null) === key);
+              const list = injects.filter(
+                (i) => (typeof i.round === "number" ? i.round : null) === key,
+              );
               const sub = roundSubtotal(list, revealed, scoring);
               return (
                 <Fragment key={`round-${key}`}>

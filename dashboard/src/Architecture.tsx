@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useState } from 'react';
-import { AWS_ICONS } from './awsIcons';
-import type { TargetSystem } from './types';
+import { Fragment, useEffect, useState } from "react";
+import { AWS_ICONS } from "./awsIcons";
+import type { TargetSystem } from "./types";
 
 /**
  * お題システムの構成図 + 軽い補足 (本物の GameDay の「元のシステム構成図」に相当)。
@@ -15,7 +15,7 @@ export default function Architecture({
   systems: TargetSystem[];
   scenarioId: string;
 }) {
-  const [activeId, setActiveId] = useState(systems[0]?.id ?? '');
+  const [activeId, setActiveId] = useState(systems[0]?.id ?? "");
   // 当日はプロジェクタ表示のため折りたたみ可能にする。App はポーリングで数秒ごとに
   // 再レンダーされるので、details の開閉は state で保持する (DOM 任せだと開き直る)。
   const [open, setOpen] = useState(true);
@@ -51,7 +51,7 @@ export default function Architecture({
               <button
                 key={s.id}
                 type="button"
-                className={s.id === active.id ? 'arch-tab active' : 'arch-tab'}
+                className={s.id === active.id ? "arch-tab active" : "arch-tab"}
                 aria-pressed={s.id === active.id}
                 onClick={() => setActiveId(s.id)}
               >
@@ -82,13 +82,13 @@ export default function Architecture({
                 </div>
                 <div className="arch-nodes">
                   {tier.nodes.map((node) => (
-                    <div key={node.service + (node.label ?? '')} className="arch-node">
+                    <div key={node.service + (node.label ?? "")} className="arch-node">
                       {node.icon && AWS_ICONS[node.icon] && (
                         <img className="arch-node-icon" src={AWS_ICONS[node.icon]} alt="" />
                       )}
                       <span className="arch-node-service">
                         {node.service}
-                        {typeof node.count === 'number' && node.count > 1 && (
+                        {typeof node.count === "number" && node.count > 1 && (
                           <span className="arch-node-count">{`×${node.count}`}</span>
                         )}
                       </span>

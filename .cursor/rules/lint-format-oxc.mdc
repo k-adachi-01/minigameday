@@ -1,0 +1,11 @@
+---
+description: oxfmt, Vite+ oxlint, and tsc quality commands for this repository
+alwaysApply: false
+---
+
+# Lint / format / typecheck
+
+- Format with oxfmt (`pnpm format` / `pnpm format:check`)
+- Lint with Vite+ oxlint + oxlint-plugin-awscdk (`pnpm lint` / `vp lint`)
+- Typecheck with `pnpm typecheck` (`tsc` for CDK + dashboard)
+- Before finishing: `pnpm agent:check`

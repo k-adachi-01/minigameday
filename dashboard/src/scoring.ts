@@ -13,7 +13,7 @@ import type {
   InjectStatus,
   ScoringConfig,
   ScoringCurve,
-} from './types';
+} from "./types";
 
 export const DEFAULT_SCORING: ScoringConfig = {
   detection: { maxPoints: 40, fullWithinMinutes: 2, zeroAfterMinutes: 15 },
@@ -54,7 +54,11 @@ export function autoScore(
   const detectionMin = Math.max(0, minutesBetween(inject.impactStartAt, inject.ackAt));
   const recoveryMin = Math.max(0, minutesBetween(inject.impactStartAt, inject.recoveredAt));
   const comms = Math.min(Math.max(inject.commsScore ?? 0, 0), scoring.commsMaxPoints);
-  return decayPoints(detectionMin, scoring.detection) + decayPoints(recoveryMin, scoring.recovery) + comms;
+  return (
+    decayPoints(detectionMin, scoring.detection) +
+    decayPoints(recoveryMin, scoring.recovery) +
+    comms
+  );
 }
 
 /** 素点の解決: scoreOverride > 自動採点 > 手動 score。どれも無ければ undefined (未採点) */
@@ -62,10 +66,10 @@ export function resolveScore(
   inject: Inject,
   scoring: ScoringConfig = DEFAULT_SCORING,
 ): number | undefined {
-  if (typeof inject.scoreOverride === 'number') return inject.scoreOverride;
+  if (typeof inject.scoreOverride === "number") return inject.scoreOverride;
   const auto = autoScore(inject, scoring);
   if (auto !== undefined) return auto;
-  return typeof inject.score === 'number' ? inject.score : undefined;
+  return typeof inject.score === "number" ? inject.score : undefined;
 }
 
 /** 自動採点の内訳 (スコアセルの小書き表示用)。自動採点が成立しないときは undefined */
@@ -105,8 +109,8 @@ export function effectiveScore(
  */
 export function findStartCandidate(data: GamedayData): Inject | null {
   const started =
-    data.injects.some((i) => i.experimentStartedAt || (i.status && i.status !== 'pending')) ||
-    (data.events ?? []).some((e) => e.type === 'experiment');
+    data.injects.some((i) => i.experimentStartedAt || (i.status && i.status !== "pending")) ||
+    (data.events ?? []).some((e) => e.type === "experiment");
   if (started) return null;
   return data.injects.find((i) => i.experimentTemplateId) ?? null;
 }
@@ -120,7 +124,7 @@ export function canRetry(data: GamedayData): boolean {
 }
 
 /** 手動の確定ステータス (自動導出はこれを上書きしない) */
-const MANUAL_FINAL: readonly InjectStatus[] = ['success', 'partial', 'failed'];
+const MANUAL_FINAL: readonly InjectStatus[] = ["success", "partial", "failed"];
 
 /**
  * アラーム帰属の staleness 窓 (分)。実験開始からこれ以上あとのアラーム遷移は帰属させない。
@@ -132,14 +136,14 @@ const MANUAL_FINAL: readonly InjectStatus[] = ['success', 'partial', 'failed'];
 const ALARM_ATTRIBUTION_WINDOW_MINUTES = 120;
 
 type DerivedField =
-  | 'experimentId'
-  | 'experimentStartedAt'
-  | 'impactStartAt'
-  | 'recoveredAt'
-  | 'ackAt'
-  | 'detectionMinutes'
-  | 'recoveryMinutes'
-  | 'status';
+  | "experimentId"
+  | "experimentStartedAt"
+  | "impactStartAt"
+  | "recoveredAt"
+  | "ackAt"
+  | "detectionMinutes"
+  | "recoveryMinutes"
+  | "status";
 
 /**
  * events[] から injects の派生フィールドを毎回全量再計算する (冪等)。
@@ -176,22 +180,22 @@ export function deriveFromEvents(data: GamedayData): boolean {
 
   // 1) 実験イベント → inject へ割当て (テンプレート ID で突き合わせ、実験 ID で追跡)
   for (const e of events) {
-    if (e.type !== 'experiment' || e.status !== 'running' || !e.experimentId) continue;
+    if (e.type !== "experiment" || e.status !== "running" || !e.experimentId) continue;
     const target =
       data.injects.find((i) => i.experimentId === e.experimentId) ??
       data.injects.find(
         (i) => i.experimentTemplateId === e.experimentTemplateId && !i.experimentId,
       );
     if (!target) continue;
-    set(target, 'experimentId', e.experimentId);
-    set(target, 'experimentStartedAt', e.at);
+    set(target, "experimentId", e.experimentId);
+    set(target, "experimentStartedAt", e.at);
   }
 
   // 2) 検知宣言イベント → ackAt (最初の宣言だけ有効。/api/ack の直接書き込みと重なっても冪等)
   for (const e of events) {
-    if (e.type !== 'ack' || !e.injectId) continue;
+    if (e.type !== "ack" || !e.injectId) continue;
     const inject = data.injects.find((i) => i.id === e.injectId);
-    if (inject && !inject.ackAt) set(inject, 'ackAt', e.at);
+    if (inject && !inject.ackAt) set(inject, "ackAt", e.at);
   }
 
   // 3) アラーム遷移を inject に帰属させる (その時刻以前に armed になった最新の inject)
@@ -200,7 +204,7 @@ export function deriveFromEvents(data: GamedayData): boolean {
     .sort((a, b) => a.experimentStartedAt.localeCompare(b.experimentStartedAt));
   const alarmSeq = new Map<string, GameEvent[]>();
   for (const e of events) {
-    if (e.type !== 'alarm' || (e.state !== 'ALARM' && e.state !== 'OK')) continue;
+    if (e.type !== "alarm" || (e.state !== "ALARM" && e.state !== "OK")) continue;
     const owner = [...armed].reverse().find((i) => i.experimentStartedAt <= e.at);
     if (!owner) continue;
     // staleness 窓の外は捨てる (帰属先を過去に遡らせもしない — より古い inject はもっと stale)
@@ -216,11 +220,11 @@ export function deriveFromEvents(data: GamedayData): boolean {
     const seq = alarmSeq.get(inject.id);
     const eventManaged = Boolean(seq && seq.length > 0);
     if (seq && eventManaged) {
-      const firstAlarm = seq.find((e) => e.state === 'ALARM');
+      const firstAlarm = seq.find((e) => e.state === "ALARM");
       const last = seq[seq.length - 1];
       const impactAt = firstAlarm?.at;
-      set(inject, 'impactStartAt', impactAt);
-      set(inject, 'recoveredAt', impactAt && last.state === 'OK' ? last.at : undefined);
+      set(inject, "impactStartAt", impactAt);
+      set(inject, "recoveredAt", impactAt && last.state === "OK" ? last.at : undefined);
     }
 
     // 分数はタイムスタンプが揃っていれば常に再計算する (手書きフォールバックでも効く)。
@@ -229,29 +233,29 @@ export function deriveFromEvents(data: GamedayData): boolean {
     if (inject.impactStartAt && inject.ackAt) {
       set(
         inject,
-        'detectionMinutes',
+        "detectionMinutes",
         Math.max(0, minutesBetween(inject.impactStartAt, inject.ackAt)),
       );
     } else if (eventManaged) {
-      set(inject, 'detectionMinutes', undefined);
+      set(inject, "detectionMinutes", undefined);
     }
     if (inject.impactStartAt && inject.recoveredAt) {
       set(
         inject,
-        'recoveryMinutes',
+        "recoveryMinutes",
         Math.max(0, minutesBetween(inject.impactStartAt, inject.recoveredAt)),
       );
     } else if (eventManaged) {
-      set(inject, 'recoveryMinutes', undefined);
+      set(inject, "recoveryMinutes", undefined);
     }
 
     // ステータス導出: recovered > impacted > armed。手動確定値と材料なしは触らない
     if (inject.status && MANUAL_FINAL.includes(inject.status)) continue;
     let derivedStatus: InjectStatus | undefined;
-    if (inject.impactStartAt && inject.recoveredAt) derivedStatus = 'recovered';
-    else if (inject.impactStartAt) derivedStatus = 'impacted';
-    else if (inject.experimentStartedAt) derivedStatus = 'armed';
-    if (derivedStatus) set(inject, 'status', derivedStatus);
+    if (inject.impactStartAt && inject.recoveredAt) derivedStatus = "recovered";
+    else if (inject.impactStartAt) derivedStatus = "impacted";
+    else if (inject.experimentStartedAt) derivedStatus = "armed";
+    if (derivedStatus) set(inject, "status", derivedStatus);
   }
 
   return changed;

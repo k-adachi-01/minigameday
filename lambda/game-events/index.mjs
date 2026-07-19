@@ -12,7 +12,7 @@
 // - EVENT# アイテムは pk!='SCORE' なので score-escalator のストリームフィルタに弾かれ、
 //   エスカレーションを誤起動しない。
 
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
 const ddb = new DynamoDBClient({});
 const TABLE_NAME = process.env.TABLE_NAME;
@@ -22,24 +22,24 @@ export const handler = async (event) => {
   const detail = event.detail ?? {};
 
   let item;
-  if (event['detail-type'] === 'CloudWatch Alarm State Change') {
+  if (event["detail-type"] === "CloudWatch Alarm State Change") {
     item = {
       pk: { S: pk },
-      type: { S: 'alarm' },
+      type: { S: "alarm" },
       at: { S: event.time },
-      alarmName: { S: detail.alarmName ?? '' },
-      state: { S: detail.state?.value ?? '' },
+      alarmName: { S: detail.alarmName ?? "" },
+      state: { S: detail.state?.value ?? "" },
       // reason は表示用の短文だけ残す (reasonData は肥大するので保存しない)
-      reason: { S: String(detail.state?.reason ?? '').slice(0, 300) },
+      reason: { S: String(detail.state?.reason ?? "").slice(0, 300) },
     };
-  } else if (event['detail-type'] === 'FIS Experiment State Change') {
+  } else if (event["detail-type"] === "FIS Experiment State Change") {
     item = {
       pk: { S: pk },
-      type: { S: 'experiment' },
+      type: { S: "experiment" },
       at: { S: event.time },
-      experimentId: { S: detail['experiment-id'] ?? '' },
-      experimentTemplateId: { S: detail['experiment-template-id'] ?? '' },
-      status: { S: detail['new-state']?.status ?? '' },
+      experimentId: { S: detail["experiment-id"] ?? "" },
+      experimentTemplateId: { S: detail["experiment-template-id"] ?? "" },
+      status: { S: detail["new-state"]?.status ?? "" },
     };
   } else {
     return { recorded: false };
@@ -50,12 +50,12 @@ export const handler = async (event) => {
       new PutItemCommand({
         TableName: TABLE_NAME,
         Item: item,
-        ConditionExpression: 'attribute_not_exists(pk)', // 再配送は黙って捨てる
+        ConditionExpression: "attribute_not_exists(pk)", // 再配送は黙って捨てる
       }),
     );
   } catch (err) {
-    if (err?.name !== 'ConditionalCheckFailedException') throw err;
+    if (err?.name !== "ConditionalCheckFailedException") throw err;
   }
-  console.log(JSON.stringify({ msg: 'game event recorded', pk, type: item.type.S }));
+  console.log(JSON.stringify({ msg: "game event recorded", pk, type: item.type.S }));
   return { recorded: true, pk };
 };

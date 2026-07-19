@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import * as cdk from 'aws-cdk-lib';
-import { AwsSolutionsChecks } from 'cdk-nag';
-import { GamedayStack } from '../lib/gameday-stack';
-import { LegacyAppStack } from '../lib/legacy-app-stack';
-import { suppressGamedayLabFindings } from '../lib/nag-suppressions';
+import * as cdk from "aws-cdk-lib";
+import { AwsSolutionsChecks } from "cdk-nag";
+import { GamedayStack } from "../lib/gameday-stack";
+import { LegacyAppStack } from "../lib/legacy-app-stack";
+import { suppressGamedayLabFindings } from "../lib/nag-suppressions";
 
 const app = new cdk.App();
 
@@ -16,7 +16,7 @@ const app = new cdk.App();
 // パラメータ管理 (parameter.ts + AppParameter 型) も、単一の使い捨てラボのため
 // 意図的に省いている。dev/stg/prd の複数環境やアカウント固定が必要になった時点で、
 // aws-cdk-development スキルの design-principles 6 節に沿って導入する。
-const prefix = 'GameDay';
+const prefix = "GameDay";
 
 // 本体: 対象アプリ + 振り返り + 障害注入を 1 スタックに統合 (関心分離は Construct 分割)。
 // cross-stack Strong Reference を避けるため、以前の 3 スタック (App/Observability/Fis) は
@@ -30,10 +30,10 @@ const legacyStack = new LegacyAppStack(app, `${prefix}-Legacy`);
 // アプリレベルの順序依存 (CFN Export は作らない)。legacy は gameday-score テーブルを
 // 「名前」で参照する (fromTableName) ため、deploy は GameDay が先・destroy --all は
 // Legacy が先でないと、legacy の recorder が実行時に書き込み先を失う。
-legacyStack.addDependency(gameday, 'GameEvents が gameday-score テーブルを名前参照するため');
+legacyStack.addDependency(gameday, "GameEvents が gameday-score テーブルを名前参照するため");
 
 // GameDay のリソースを識別しやすくするタグ (爆発半径の確認用)
-cdk.Tags.of(app).add('Project', 'mini-gameday');
+cdk.Tags.of(app).add("Project", "mini-gameday");
 
 // cdk-nag: AWS ベストプラクティス検査。通常の deploy は速さ優先で無効、
 // `npm run synth:nag` (= cdk synth -c nag=true) のときだけ全スタックを検査する。
@@ -41,6 +41,6 @@ cdk.Tags.of(app).add('Project', 'mini-gameday');
 for (const stack of [gameday, legacyStack]) {
   suppressGamedayLabFindings(stack);
 }
-if (app.node.tryGetContext('nag') === 'true') {
+if (app.node.tryGetContext("nag") === "true") {
   cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 }

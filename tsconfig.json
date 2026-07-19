@@ -4,9 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "isolatedModules": true,
-    "lib": [
-      "es2022"
-    ],
+    "lib": ["es2022"],
     "noEmit": true,
     "strict": true,
     "noImplicitAny": true,
@@ -20,14 +18,7 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["./node_modules/@types"]
   },
-  "exclude": [
-    "node_modules",
-    "cdk.out",
-    "canaries",
-    "dashboard"
-  ]
+  "exclude": ["node_modules", "cdk.out", "canaries", "dashboard"]
 }

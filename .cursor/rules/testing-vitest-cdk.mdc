@@ -1,0 +1,12 @@
+---
+globs: test/**/*.ts,dashboard/src/**/*.test.ts,dashboard/src/**/*.test.tsx
+alwaysApply: false
+---
+
+# Testing with Vitest + CDK assertions
+
+- Use `aws-cdk-lib/assertions` (`Template.fromStack`).
+- Runner is Vitest via Vite+ (`pnpm test` / `vp test run`; official docs examples use Jest).
+- Include fine-grained, snapshot, and security/negative assertions for CDK.
+- Dashboard tests live under `dashboard/src/**/*.test.{ts,tsx}`.
+- Run `pnpm test` after changes; finish with `pnpm agent:check`.

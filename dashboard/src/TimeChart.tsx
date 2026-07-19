@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
-import type { Inject } from './types';
-import { fmtMinutes } from './types';
+import { useRef, useState } from "react";
+import type { Inject } from "./types";
+import { fmtMinutes } from "./types";
 
 // 系列色は styles.css の検証済みパレット (dataviz スキル) のロール変数を参照する
 const SERIES = [
-  { key: 'detectionMinutes', label: '検知', color: 'var(--series-1)' },
-  { key: 'recoveryMinutes', label: '復旧', color: 'var(--series-2)' },
+  { key: "detectionMinutes", label: "検知", color: "var(--series-1)" },
+  { key: "recoveryMinutes", label: "復旧", color: "var(--series-2)" },
 ] as const;
 
 const MARGIN = { top: 6, right: 64, bottom: 30, left: 170 };
@@ -49,7 +49,7 @@ export default function TimeChart({ injects }: { injects: Inject[] }) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   const rows = injects.filter(
-    (i) => typeof i.detectionMinutes === 'number' || typeof i.recoveryMinutes === 'number',
+    (i) => typeof i.detectionMinutes === "number" || typeof i.recoveryMinutes === "number",
   );
   if (rows.length === 0) {
     return <p className="kpt-empty">まだ時間の記録がありません</p>;
@@ -74,14 +74,26 @@ export default function TimeChart({ injects }: { injects: Inject[] }) {
 
   return (
     <div className="chart-wrap" ref={wrapRef}>
-      <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label="インジェクトごとの検知・復旧時間 (分)">
+      <svg
+        viewBox={`0 0 ${WIDTH} ${height}`}
+        role="img"
+        aria-label="インジェクトごとの検知・復旧時間 (分)"
+      >
         {ticks.map((v) => (
           <g key={v}>
             <line
-              x1={x(v)} x2={x(v)} y1={MARGIN.top} y2={height - MARGIN.bottom}
-              className={v === 0 ? 'baseline-line' : 'gridline'}
+              x1={x(v)}
+              x2={x(v)}
+              y1={MARGIN.top}
+              y2={height - MARGIN.bottom}
+              className={v === 0 ? "baseline-line" : "gridline"}
             />
-            <text x={x(v)} y={height - MARGIN.bottom + 16} textAnchor="middle" className="axis-text">
+            <text
+              x={x(v)}
+              y={height - MARGIN.bottom + 16}
+              textAnchor="middle"
+              className="axis-text"
+            >
               {v === xMax ? `${v} 分` : String(v)}
             </text>
           </g>
@@ -89,12 +101,16 @@ export default function TimeChart({ injects }: { injects: Inject[] }) {
 
         {rows.map((inject, i) => {
           const groupY = MARGIN.top + i * ROW_H + GROUP_PAD / 2;
-          const ariaValues = SERIES.map((s) => `${s.label} ${fmtMinutes(inject[s.key] ?? 0)}分`).join('、');
+          const ariaValues = SERIES.map(
+            (s) => `${s.label} ${fmtMinutes(inject[s.key] ?? 0)}分`,
+          ).join("、");
           return (
             <g key={inject.id}>
               <text
-                x={MARGIN.left - 8} y={groupY + BAR_H + BAR_GAP / 2 + 4}
-                textAnchor="end" className="row-label"
+                x={MARGIN.left - 8}
+                y={groupY + BAR_H + BAR_GAP / 2 + 4}
+                textAnchor="end"
+                className="row-label"
               >
                 {truncate(inject.title, 13)}
               </text>
@@ -107,25 +123,35 @@ export default function TimeChart({ injects }: { injects: Inject[] }) {
                 onFocus={() => {
                   const rect = wrapRef.current?.getBoundingClientRect();
                   if (!rect) return;
-                  showTooltip(inject, rect.left + rect.width / 2, rect.top + ((groupY + ROW_H) / height) * rect.height);
+                  showTooltip(
+                    inject,
+                    rect.left + rect.width / 2,
+                    rect.top + ((groupY + ROW_H) / height) * rect.height,
+                  );
                 }}
                 onBlur={() => setTooltip(null)}
               >
                 {/* ヒットターゲットはマークより大きく (行全体を透明矩形で覆う) */}
                 <rect
-                  x={MARGIN.left} y={groupY - GROUP_PAD / 2}
-                  width={WIDTH - MARGIN.left - MARGIN.right + 48} height={ROW_H}
+                  x={MARGIN.left}
+                  y={groupY - GROUP_PAD / 2}
+                  width={WIDTH - MARGIN.left - MARGIN.right + 48}
+                  height={ROW_H}
                   fill="transparent"
                 />
                 {SERIES.map((s, j) => {
                   const v = inject[s.key];
-                  if (typeof v !== 'number') return null;
+                  if (typeof v !== "number") return null;
                   const y = groupY + j * (BAR_H + BAR_GAP);
                   const w = Math.max(0, x(v) - MARGIN.left);
                   return (
                     <g key={s.key}>
                       {w > 0 && (
-                        <path d={roundedBarPath(MARGIN.left, y, w, BAR_H)} className="bar" style={{ fill: s.color }} />
+                        <path
+                          d={roundedBarPath(MARGIN.left, y, w, BAR_H)}
+                          className="bar"
+                          style={{ fill: s.color }}
+                        />
                       )}
                       {/* 直接ラベル (バー先端の外側)。ライトモードの aqua は 3:1 未満なので必須の救済 */}
                       <text x={x(v) + 6} y={y + BAR_H - 4} className="value-label">
@@ -148,7 +174,9 @@ export default function TimeChart({ injects }: { injects: Inject[] }) {
             return (
               <div key={s.key} className="tt-row">
                 <span className="tt-key" style={{ background: s.color }} />
-                <span className="tt-value">{typeof v === 'number' ? `${fmtMinutes(v)}分` : '—'}</span>
+                <span className="tt-value">
+                  {typeof v === "number" ? `${fmtMinutes(v)}分` : "—"}
+                </span>
                 <span className="tt-name">{s.label}</span>
               </div>
             );

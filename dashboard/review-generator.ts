@@ -13,42 +13,42 @@
 // 認証は既定の AWS 認証チェーン (または AWS_BEARER_TOKEN_BEDROCK)。
 // リージョン/モデルは GAMEDAY_BEDROCK_REGION / GAMEDAY_REVIEW_MODEL で上書きできる。
 
-import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
-import { AI_FEEDBACK_AUTHOR, type Feedback, type GamedayData } from './src/types';
-import { autoScoreBreakdown, DEFAULT_SCORING } from './src/scoring';
-import type { DriftMaterial } from './drift-detector';
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import { AI_FEEDBACK_AUTHOR, type Feedback, type GamedayData } from "./src/types";
+import { autoScoreBreakdown, DEFAULT_SCORING } from "./src/scoring";
+import type { DriftMaterial } from "./drift-detector";
 
 // 既定は APAC クロスリージョン推論プロファイルの Nova Lite (東京から呼べる・低コスト)
-const MODEL = process.env.GAMEDAY_REVIEW_MODEL ?? 'apac.amazon.nova-lite-v1:0';
-const REGION = process.env.GAMEDAY_BEDROCK_REGION ?? process.env.AWS_REGION ?? 'ap-northeast-1';
+const MODEL = process.env.GAMEDAY_REVIEW_MODEL ?? "apac.amazon.nova-lite-v1:0";
+const REGION = process.env.GAMEDAY_BEDROCK_REGION ?? process.env.AWS_REGION ?? "ap-northeast-1";
 
 // 出力してほしい JSON の形。Converse API には Anthropic の output_config (json_schema 強制) が
 // 無いので、スキーマをプロンプトに埋めて「JSON のみ出力」を指示し、受信側で検証する。
 const KPT_OUTPUT_SCHEMA = {
-  type: 'object',
+  type: "object",
   additionalProperties: false,
-  required: ['items'],
+  required: ["items"],
   properties: {
     items: {
-      type: 'array',
-      description: 'KPT 形式の講評 (計 3〜8 個。実測データに基づくものだけ)',
+      type: "array",
+      description: "KPT 形式の講評 (計 3〜8 個。実測データに基づくものだけ)",
       items: {
-        type: 'object',
+        type: "object",
         additionalProperties: false,
-        required: ['type', 'comment'],
+        required: ["type", "comment"],
         properties: {
           type: {
-            type: 'string',
-            enum: ['keep', 'problem', 'try'],
-            description: 'keep=続けたい良い動き / problem=課題 / try=次に試すこと',
+            type: "string",
+            enum: ["keep", "problem", "try"],
+            description: "keep=続けたい良い動き / problem=課題 / try=次に試すこと",
           },
           comment: {
-            type: 'string',
-            description: '講評 1〜3 文。実測タイムライン・分数・採点・ヒント消費を織り込む',
+            type: "string",
+            description: "講評 1〜3 文。実測タイムライン・分数・採点・ヒント消費を織り込む",
           },
           scenarioId: {
-            type: 'string',
-            description: '特定インジェクトの講評なら injects[].scenarioId を。全体の話なら省略',
+            type: "string",
+            description: "特定インジェクトの講評なら injects[].scenarioId を。全体の話なら省略",
           },
         },
       },
@@ -95,7 +95,7 @@ function stripCodeFence(text: string): string {
   return m ? m[1] : text.trim();
 }
 
-const KPT_TYPES = new Set(['keep', 'problem', 'try']);
+const KPT_TYPES = new Set(["keep", "problem", "try"]);
 
 /**
  * gameday.json の実測データ + `cdk drift` の結果から KPT 形式の講評 (feedback[] へ追記する
@@ -141,9 +141,11 @@ export async function generateReview(
       system: [{ text: SYSTEM_PROMPT }],
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { text: `今回の GameDay の記録データ (gameday.json + ドリフト検出結果) を KPT 形式で講評せよ。\n\n${JSON.stringify(material)}` },
+            {
+              text: `今回の GameDay の記録データ (gameday.json + ドリフト検出結果) を KPT 形式で講評せよ。\n\n${JSON.stringify(material)}`,
+            },
           ],
         },
       ],
@@ -152,19 +154,21 @@ export async function generateReview(
     }),
   );
 
-  if (response.stopReason === 'max_tokens') {
-    throw new Error('講評が出力上限で途切れた (stopReason: max_tokens)。インジェクト数を絞るか maxTokens を上げる');
+  if (response.stopReason === "max_tokens") {
+    throw new Error(
+      "講評が出力上限で途切れた (stopReason: max_tokens)。インジェクト数を絞るか maxTokens を上げる",
+    );
   }
-  const text = response.output?.message?.content?.find((b) => 'text' in b)?.text;
+  const text = response.output?.message?.content?.find((b) => "text" in b)?.text;
   if (!text) {
     throw new Error(`講評テキストが返らなかった (stopReason: ${response.stopReason})`);
   }
   const parsed = JSON.parse(stripCodeFence(text)) as { items?: Feedback[] };
   if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
-    throw new Error('講評 JSON が KPT スキーマに合わない (items が無い/空)');
+    throw new Error("講評 JSON が KPT スキーマに合わない (items が無い/空)");
   }
   const invalid = parsed.items.find(
-    (i) => !KPT_TYPES.has(i.type) || typeof i.comment !== 'string' || i.comment.length === 0,
+    (i) => !KPT_TYPES.has(i.type) || typeof i.comment !== "string" || i.comment.length === 0,
   );
   if (invalid) {
     throw new Error(`講評 JSON に不正なエントリがある: ${JSON.stringify(invalid)}`);
@@ -172,7 +176,7 @@ export async function generateReview(
   return parsed.items.map((i) => ({
     type: i.type,
     comment: i.comment,
-    ...(typeof i.scenarioId === 'string' && i.scenarioId ? { scenarioId: i.scenarioId } : {}),
+    ...(typeof i.scenarioId === "string" && i.scenarioId ? { scenarioId: i.scenarioId } : {}),
     author: AI_FEEDBACK_AUTHOR,
   }));
 }

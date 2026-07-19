@@ -2,17 +2,17 @@
 // - GET /healthz : プロセス生存のみ返す (ALB ヘルスチェック用 / DB 非依存)
 // - GET /        : データ層(Aurora)へ SELECT 1 を実行し、可否で 200/503 を返す
 //                  (canary が叩くのはここ。DB フェイルオーバー時に 503 となり振り返りで可視化される)
-const http = require('http');
-const mysql = require('mysql2/promise');
+const http = require("http");
+const mysql = require("mysql2/promise");
 
 const PORT = 80;
 const { DB_HOST, DB_PORT, DB_NAME } = process.env;
 
 let creds = {};
 try {
-  creds = JSON.parse(process.env.DB_SECRET || '{}');
+  creds = JSON.parse(process.env.DB_SECRET || "{}");
 } catch (e) {
-  console.error('failed to parse DB_SECRET', e);
+  console.error("failed to parse DB_SECRET", e);
 }
 
 async function checkDb() {
@@ -26,27 +26,33 @@ async function checkDb() {
     connectTimeout: 3000,
   });
   try {
-    await conn.query('SELECT 1');
+    await conn.query("SELECT 1");
   } finally {
     await conn.end();
   }
 }
 
 const server = http.createServer(async (req, res) => {
-  if (req.url === '/healthz') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'alive' }));
+  if (req.url === "/healthz") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "alive" }));
     return;
   }
 
   try {
     await checkDb();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', db: 'reachable', host: DB_HOST }));
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok", db: "reachable", host: DB_HOST }));
   } catch (err) {
     // DB に到達できない = データ層障害。canary はこの 503 を捉える。
-    res.writeHead(503, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'degraded', db: 'unreachable', error: String(err && err.message ? err.message : err) }));
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: "degraded",
+        db: "unreachable",
+        error: String(err && err.message ? err.message : err),
+      }),
+    );
   }
 });
 

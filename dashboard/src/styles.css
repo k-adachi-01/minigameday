@@ -11,32 +11,32 @@
   --font-display: "Zen Kaku Gothic New", system-ui, sans-serif; /* 数字も太めゴシック */
   --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
 
-  --radius: 22px;      /* カードは大きめの角丸 */
+  --radius: 22px; /* カードは大きめの角丸 */
   --radius-sm: 14px;
   --shadow: 0 12px 34px rgba(72, 56, 104, 0.09); /* ごく淡いソフトシャドウ */
   --blur: saturate(1.12) blur(9px);
 
   /* 紙 (半透明) とインク */
-  --page: #eee9f0;         /* 背景グラデーションの下地 (near-white) */
-  --surface-1: rgba(255, 255, 255, 0.60); /* 水彩が透ける半透明カード */
+  --page: #eee9f0; /* 背景グラデーションの下地 (near-white) */
+  --surface-1: rgba(255, 255, 255, 0.6); /* 水彩が透ける半透明カード */
   --surface-solid: #ffffff;
-  --text-primary: #292531;  /* 黒に近いダーク (ほのかに紫) */
+  --text-primary: #292531; /* 黒に近いダーク (ほのかに紫) */
   --text-secondary: #5c5563;
   --text-muted: #928b9b;
-  --grid: rgba(60, 45, 78, 0.10);
+  --grid: rgba(60, 45, 78, 0.1);
   --baseline: rgba(60, 45, 78, 0.18);
   --border: rgba(92, 74, 120, 0.14);
 
-  --accent: #5a48a8;        /* 深い紫 (ネイビーパープル) */
-  --accent-2: #e0862a;      /* アンバー (黄橙) */
-  --accent-tint: rgba(90, 72, 168, 0.10);
+  --accent: #5a48a8; /* 深い紫 (ネイビーパープル) */
+  --accent-2: #e0862a; /* アンバー (黄橙) */
+  --accent-tint: rgba(90, 72, 168, 0.1);
 
-  --series-1: #5a48a8;      /* 検知 (紫) */
-  --series-2: #e0862a;      /* 復旧 (アンバー) */
+  --series-1: #5a48a8; /* 検知 (紫) */
+  --series-2: #e0862a; /* 復旧 (アンバー) */
   --meter-track: rgba(90, 72, 168, 0.15);
 
-  --status-good: #3f8a63;     /* くすんだ緑 */
-  --status-warning: #cf8a2e;  /* アンバー */
+  --status-good: #3f8a63; /* くすんだ緑 */
+  --status-warning: #cf8a2e; /* アンバー */
   --status-critical: #cf5a52; /* くすんだ珊瑚色の赤 */
   --status-critical-tint: rgba(207, 90, 82, 0.12);
 
@@ -67,7 +67,7 @@ body {
     --text-primary: #f2eef6;
     --text-secondary: #c4bdce;
     --text-muted: #8f8799;
-    --grid: rgba(232, 222, 246, 0.10);
+    --grid: rgba(232, 222, 246, 0.1);
     --baseline: rgba(232, 222, 246, 0.18);
     --border: rgba(232, 222, 246, 0.13);
 
@@ -91,13 +91,15 @@ body {
   body {
     background-image:
       radial-gradient(44% 40% at 14% 14%, rgba(92, 74, 134, 0.42), transparent 70%),
-      radial-gradient(46% 40% at 86% 12%, rgba(58, 84, 112, 0.40), transparent 72%),
-      radial-gradient(42% 44% at 80% 84%, rgba(122, 82, 82, 0.30), transparent 72%),
+      radial-gradient(46% 40% at 86% 12%, rgba(58, 84, 112, 0.4), transparent 72%),
+      radial-gradient(42% 44% at 80% 84%, rgba(122, 82, 82, 0.3), transparent 72%),
       radial-gradient(46% 46% at 20% 88%, rgba(70, 92, 112, 0.32), transparent 74%);
   }
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -110,10 +112,18 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-.page { max-width: 1140px; margin: 0 auto; padding: 40px 28px 80px; }
+.page {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+}
 
 /* 見やすさの底: キーボードフォーカスを常に見せる */
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* --- ヘッダー --- */
 .page-header {
@@ -150,7 +160,12 @@ body {
 }
 
 /* --- LIVE インジケータ --- */
-.live { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.live {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
 .live-badge {
   display: inline-flex;
   align-items: center;
@@ -162,12 +177,20 @@ body {
   color: var(--status-good);
 }
 .live-badge .live-dot {
-  width: 7px; height: 7px; border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background: var(--status-good);
   animation: live-pulse 1.6s ease-in-out infinite;
 }
-.live-badge.stale { color: var(--status-critical); letter-spacing: 0.08em; }
-.live-badge.stale .live-dot { background: var(--status-critical); animation: none; }
+.live-badge.stale {
+  color: var(--status-critical);
+  letter-spacing: 0.08em;
+}
+.live-badge.stale .live-dot {
+  background: var(--status-critical);
+  animation: none;
+}
 .live-time {
   color: var(--text-muted);
   font-size: 11px;
@@ -175,8 +198,20 @@ body {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
-@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-@media (prefers-reduced-motion: reduce) { .live-badge .live-dot { animation: none; } }
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-badge .live-dot {
+    animation: none;
+  }
+}
 
 /* --- フィルター行 --- */
 .filter-row {
@@ -186,7 +221,11 @@ body {
   flex-wrap: wrap;
   margin: 0 0 26px;
 }
-.filter { display: inline-flex; align-items: center; gap: 10px; }
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
 .filter-label {
   color: var(--text-muted);
   font-size: 11px;
@@ -207,8 +246,14 @@ body {
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
-.filter select:hover { border-color: var(--accent); }
-.filter-note { margin: 0; color: var(--text-muted); font-size: 12px; }
+.filter select:hover {
+  border-color: var(--accent);
+}
+.filter-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
 
 /* --- スタットの帯 (浮かぶ半透明カード。ヒーロー = 総合スコア) --- */
 .tiles {
@@ -242,8 +287,18 @@ body {
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums lining-nums;
 }
-.tile-value .unit { font-size: 15px; font-weight: 700; color: var(--text-muted); margin-left: 4px; }
-.tile-delta { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--status-warning); }
+.tile-value .unit {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+.tile-delta {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--status-warning);
+}
 
 /* ヒーロー: 総合スコアは紙面いっぱいの大数字 (このページの「顔」) */
 .tile.hero {
@@ -255,7 +310,9 @@ body {
   flex-wrap: wrap;
   padding: 26px 30px 24px;
 }
-.tile.hero .tile-label { align-self: flex-start; }
+.tile.hero .tile-label {
+  align-self: flex-start;
+}
 .tile.hero .tile-value {
   font-size: 76px;
   font-weight: 900;
@@ -264,9 +321,17 @@ body {
   letter-spacing: 0.005em;
   color: var(--accent); /* スコアのハイライトに紫 */
 }
-.tile.hero .tile-value .unit { font-size: 24px; color: var(--text-muted); }
-.tile.hero > div:first-child { flex: 1 1 auto; }
-.tile.hero .tile-delta { align-self: flex-end; margin: 0; }
+.tile.hero .tile-value .unit {
+  font-size: 24px;
+  color: var(--text-muted);
+}
+.tile.hero > div:first-child {
+  flex: 1 1 auto;
+}
+.tile.hero .tile-delta {
+  align-self: flex-end;
+  margin: 0;
+}
 
 /* --- 記事パネル (大きな角丸の半透明カード) --- */
 .card {
@@ -295,17 +360,47 @@ body {
   background: var(--accent);
   margin-bottom: 12px;
 }
-.card-sub { margin: 9px 0 18px; color: var(--text-secondary); font-size: 13px; font-weight: 500; max-width: 68ch; }
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.card-sub {
+  margin: 9px 0 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 68ch;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
 
 /* --- システム構成 (参考資料) --- */
-.arch-head { cursor: pointer; }
-.arch-head h2 { display: inline; margin: 0; font-size: 18px; font-weight: 700; }
-.arch-head h2::before { display: none; }
-.arch-head .card-sub { margin: 9px 0 0 0; }
-.arch[open] .arch-head .card-sub { margin-bottom: 16px; }
+.arch-head {
+  cursor: pointer;
+}
+.arch-head h2 {
+  display: inline;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.arch-head h2::before {
+  display: none;
+}
+.arch-head .card-sub {
+  margin: 9px 0 0 0;
+}
+.arch[open] .arch-head .card-sub {
+  margin-bottom: 16px;
+}
 
-.arch-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.arch-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
 .arch-tab {
   font: inherit;
   font-size: 12px;
@@ -317,7 +412,9 @@ body {
   border-radius: 999px;
   padding: 5px 14px;
 }
-.arch-tab:hover { border-color: var(--accent); }
+.arch-tab:hover {
+  border-color: var(--accent);
+}
 .arch-tab.active {
   color: var(--surface-solid);
   background: var(--accent);
@@ -325,10 +422,21 @@ body {
   border-color: var(--accent);
 }
 
-.arch-summary { margin: 0 0 4px; color: var(--text-secondary); font-size: 13px; }
-.arch-scenarios { margin: 0 0 12px; color: var(--text-muted); font-size: 12px; }
+.arch-summary {
+  margin: 0 0 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.arch-scenarios {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
 
-.arch-diagram { display: flex; flex-direction: column; }
+.arch-diagram {
+  display: flex;
+  flex-direction: column;
+}
 .arch-tier {
   border: 1px dashed var(--baseline);
   border-radius: 16px;
@@ -345,8 +453,17 @@ body {
   text-transform: uppercase;
   margin-bottom: 10px;
 }
-.arch-tier-icon { width: 18px; height: 18px; flex: none; }
-.arch-nodes { display: flex; gap: 8px 24px; flex-wrap: wrap; align-items: flex-start; }
+.arch-tier-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.arch-nodes {
+  display: flex;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
 .arch-node {
   display: flex;
   flex-direction: column;
@@ -363,18 +480,52 @@ body {
   background: var(--icon-plate);
   border-radius: 12px;
 }
-.arch-node-service { font-size: 13px; font-weight: 700; }
-.arch-node-count { color: var(--text-secondary); font-weight: 700; font-size: 12px; margin-left: 4px; font-family: var(--font-display); }
-.arch-node-label { color: var(--text-secondary); font-size: 11.5px; line-height: 1.5; }
-.arch-tier-note { margin: 8px 0 0; color: var(--text-muted); font-size: 12px; }
-.arch-arrow { text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+.arch-node-service {
+  font-size: 13px;
+  font-weight: 700;
+}
+.arch-node-count {
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 12px;
+  margin-left: 4px;
+  font-family: var(--font-display);
+}
+.arch-node-label {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.arch-tier-note {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.arch-arrow {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
 
-.arch-notes { margin: 14px 0 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; }
-.arch-notes li { margin-top: 3px; }
+.arch-notes {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.arch-notes li {
+  margin-top: 3px;
+}
 
 /* --- スコア表 --- */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 th {
   text-align: left;
   color: var(--text-muted);
@@ -390,23 +541,85 @@ td {
   border-bottom: 1px solid var(--grid);
   vertical-align: top;
 }
-tr:last-child td { border-bottom: none; }
-th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
-td.num { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
-td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0; }
+tr:last-child td {
+  border-bottom: none;
+}
+th.num,
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+td.num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+}
+td.time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0;
+}
 
-.inject-title { font-weight: 700; }
-.inject-scenario { color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 8px; }
-.inject-detail { margin-top: 6px; }
-.inject-detail summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; font-weight: 600; }
-.inject-detail dl { margin: 8px 0 0; font-size: 13px; }
-.inject-detail dt { color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px; }
-.inject-detail dd { margin: 2px 0 0; color: var(--text-secondary); }
+.inject-title {
+  font-weight: 700;
+}
+.inject-scenario {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.inject-detail {
+  margin-top: 6px;
+}
+.inject-detail summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.inject-detail dl {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+.inject-detail dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+.inject-detail dd {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+}
 
 /* --- 段階ヒント (ポイント消費で開示) --- */
-.hints { margin-top: 10px; }
-.hints-head { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
-.hints-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.hints {
+  margin-top: 10px;
+}
+.hints-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.hints-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .hint-reveal {
   font: inherit;
   font-size: 12px;
@@ -422,31 +635,112 @@ td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
   border-radius: 999px;
   padding: 6px 13px;
 }
-.hint-reveal:hover { border-color: var(--accent); border-style: solid; }
-.hint-reveal .hint-lock { filter: grayscale(0.2); }
-.hint-cost { color: var(--accent-2); font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+.hint-reveal:hover {
+  border-color: var(--accent);
+  border-style: solid;
+}
+.hint-reveal .hint-lock {
+  filter: grayscale(0.2);
+}
+.hint-cost {
+  color: var(--accent-2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+}
 .hint.open .hint-body {
   border-left: 3px solid var(--accent);
   border-radius: 2px;
   padding: 4px 0 4px 12px;
 }
-.hint-line { display: flex; align-items: baseline; gap: 8px; }
-.hint-label { font-size: 12px; font-weight: 700; color: var(--text-primary); }
-.hint-cost.spent { color: var(--text-muted); font-weight: 500; font-size: 11px; }
-.hint-text { margin: 4px 0 0; font-size: 13px; color: var(--text-secondary); }
+.hint-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.hint-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.hint-cost.spent {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+.hint-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
 
-.score-penalty { color: var(--text-muted); font-size: 11px; font-weight: 500; margin-left: 6px; }
+.score-penalty {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 6px;
+}
 
 /* --- ヒント消費サマリ --- */
-.hint-total { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
-.hint-total strong { font-size: 24px; color: var(--accent-2); font-variant-numeric: tabular-nums; font-family: var(--font-display); font-weight: 900; }
-.hint-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 8px; }
-.hint-summary-group { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; background: var(--surface-1); }
-.hint-summary-inject { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
-.hint-summary-subtotal { color: var(--accent-2); font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; margin-left: 4px; font-family: var(--font-display); }
-.hint-summary-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.hint-summary-item { display: flex; align-items: baseline; gap: 8px; font-size: 12px; }
-.hint-summary-time { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; margin-left: auto; font-family: var(--font-mono); letter-spacing: 0; }
+.hint-total {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.hint-total strong {
+  font-size: 24px;
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+.hint-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+.hint-summary-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  background: var(--surface-1);
+}
+.hint-summary-inject {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.hint-summary-subtotal {
+  color: var(--accent-2);
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+  font-family: var(--font-display);
+}
+.hint-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hint-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+.hint-summary-time {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
 
 /* 結果チップ: アイコン + ラベル (色だけに意味を持たせない) */
 .chip {
@@ -462,12 +756,27 @@ td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
   white-space: nowrap;
   background: var(--surface-1);
 }
-.chip .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.chip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
 
 /* スコアセル: 数値 + メーター (紫→アンバーの遊び心あるグラデ) */
-.score-cell { min-width: 150px; }
-.score-num { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-weight: 900; font-size: 19px; }
-.score-max { color: var(--text-muted); font-size: 12px; }
+.score-cell {
+  min-width: 150px;
+}
+.score-num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  font-size: 19px;
+}
+.score-max {
+  color: var(--text-muted);
+  font-size: 12px;
+}
 .meter {
   margin-top: 8px;
   height: 6px;
@@ -475,27 +784,81 @@ td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
   background: var(--meter-track);
   overflow: hidden;
 }
-.meter > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
 
 /* --- チャート --- */
-.legend { display: flex; gap: 16px; align-items: center; padding-top: 4px; }
-.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-.legend-swatch { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+.legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-top: 4px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex: none;
+}
 
-.chart-wrap { position: relative; }
-.chart-wrap svg { display: block; width: 100%; height: auto; }
-.chart-wrap .bar-hit { cursor: default; outline: none; }
+.chart-wrap {
+  position: relative;
+}
+.chart-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.chart-wrap .bar-hit {
+  cursor: default;
+  outline: none;
+}
 .chart-wrap .bar-hit:focus-visible rect.bar,
 .chart-wrap .bar-hit:hover rect.bar,
-.chart-wrap .bar-hit path.bar { transition: opacity 0.1s; }
+.chart-wrap .bar-hit path.bar {
+  transition: opacity 0.1s;
+}
 .chart-wrap .bar-hit:hover path.bar,
-.chart-wrap .bar-hit:focus-visible path.bar { opacity: 0.82; }
+.chart-wrap .bar-hit:focus-visible path.bar {
+  opacity: 0.82;
+}
 
-.axis-text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-.row-label { fill: var(--text-secondary); font-size: 12px; font-weight: 600; }
-.value-label { fill: var(--text-secondary); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.gridline { stroke: var(--grid); stroke-width: 1; }
-.baseline-line { stroke: var(--baseline); stroke-width: 1; }
+.axis-text {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.row-label {
+  fill: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.value-label {
+  fill: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.gridline {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+.baseline-line {
+  stroke: var(--baseline);
+  stroke-width: 1;
+}
 
 .tooltip {
   position: absolute;
@@ -512,12 +875,32 @@ td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
   transition: opacity 0.08s;
   z-index: 10;
 }
-.tooltip.visible { opacity: 1; }
-.tooltip .tt-title { font-weight: 700; margin-bottom: 2px; }
-.tooltip .tt-row { display: flex; align-items: center; gap: 6px; }
-.tooltip .tt-key { width: 10px; height: 3px; border-radius: 2px; flex: none; }
-.tooltip .tt-value { font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
-.tooltip .tt-name { opacity: 0.75; }
+.tooltip.visible {
+  opacity: 1;
+}
+.tooltip .tt-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.tooltip .tt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip .tt-key {
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  flex: none;
+}
+.tooltip .tt-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+}
+.tooltip .tt-name {
+  opacity: 0.75;
+}
 
 /* --- KPT フィードバック --- */
 .kpt {
@@ -537,18 +920,41 @@ td.time { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--
   padding-bottom: 8px;
   border-bottom: 1px solid var(--baseline);
 }
-.kpt-col-head .dot { width: 8px; height: 8px; border-radius: 50%; }
-.kpt-col-head .count { color: var(--text-muted); font-weight: 700; font-family: var(--font-display); }
+.kpt-col-head .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.kpt-col-head .count {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-family: var(--font-display);
+}
 .kpt-card {
   border-left: 3px solid var(--border);
   padding: 4px 0 4px 14px;
   margin-bottom: 14px;
 }
-.kpt-card .comment { margin: 0; }
-.kpt-card .meta { margin: 6px 0 0; color: var(--text-muted); font-size: 12px; }
-.kpt-empty { color: var(--text-muted); font-size: 13px; }
+.kpt-card .comment {
+  margin: 0;
+}
+.kpt-card .meta {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.kpt-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
 
-.page-footer { color: var(--text-muted); font-size: 12px; margin-top: 10px; padding-top: 18px; border-top: 1px solid var(--border); }
+.page-footer {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
 code {
   font-family: var(--font-mono);
   font-size: 0.9em;
@@ -593,17 +999,31 @@ code {
   background: var(--status-critical-tint);
   border: 1px solid var(--status-critical);
 }
-.ack-banner-body { display: flex; flex-direction: column; gap: 3px; }
+.ack-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 .ack-banner-state {
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.ack-banner.impacted .ack-banner-state { color: var(--status-critical); }
-.ack-banner.armed .ack-banner-state { color: var(--text-muted); }
-.ack-banner-title { font-weight: 900; font-size: 17px; }
-.ack-banner-note { color: var(--text-secondary); font-size: 13px; }
+.ack-banner.impacted .ack-banner-state {
+  color: var(--status-critical);
+}
+.ack-banner.armed .ack-banner-state {
+  color: var(--text-muted);
+}
+.ack-banner-title {
+  font-weight: 900;
+  font-size: 17px;
+}
+.ack-banner-note {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
 .ack-button {
   font: inherit;
   font-weight: 700;
@@ -615,7 +1035,9 @@ code {
   padding: 11px 22px;
   white-space: nowrap;
 }
-.ack-button:hover { filter: brightness(1.08); }
+.ack-button:hover {
+  filter: brightness(1.08);
+}
 .ack-button.small {
   display: inline-block;
   font-size: 11px;
@@ -625,10 +1047,20 @@ code {
   margin-top: 8px;
   border-radius: 999px;
 }
-.ack-done { color: var(--status-good); font-weight: 700; font-size: 13px; }
+.ack-done {
+  color: var(--status-good);
+  font-weight: 700;
+  font-size: 13px;
+}
 
 /* --- 自動採点の内訳 --- */
-.score-breakdown { color: var(--text-muted); font-size: 11px; font-weight: 500; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.score-breakdown {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
 
 /* --- スコア表のラウンド見出し行 (章の扉) --- */
 .round-header td {
@@ -652,7 +1084,13 @@ code {
 }
 
 /* --- AI 講評の生成ボタン (dev サーバのみ。生成結果は KPT ボードに載る) --- */
-.review-control { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+.review-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
 .review-generate {
   font: inherit;
   font-size: 13px;
@@ -665,12 +1103,26 @@ code {
   padding: 9px 20px;
   white-space: nowrap;
 }
-.review-generate:hover { filter: brightness(1.08); }
-.review-generate:disabled { opacity: 0.6; cursor: progress; }
-.review-error { color: var(--status-critical); font-size: 13px; }
+.review-generate:hover {
+  filter: brightness(1.08);
+}
+.review-generate:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.review-error {
+  color: var(--status-critical);
+  font-size: 13px;
+}
 
 /* --- ゲーム進行コントロール: GameDay 開始 / リトライ (dev サーバのみ) --- */
-.game-control { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: -8px 0 4px; }
+.game-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -8px 0 4px;
+}
 .game-start,
 .game-retry {
   font: inherit;
@@ -681,19 +1133,51 @@ code {
   padding: 9px 20px;
   white-space: nowrap;
 }
-.game-start { color: var(--surface-solid); background: var(--accent); border: none; }
-.game-start:hover { filter: brightness(1.08); }
-.game-start:disabled { opacity: 0.6; cursor: progress; }
-.game-retry { color: var(--status-critical); background: transparent; border: 1.5px solid var(--status-critical); }
-.game-retry:hover { filter: brightness(1.08); }
-.game-retry.armed { color: var(--surface-solid); background: var(--status-critical); }
-.game-note { font-size: 13px; color: var(--text-muted); }
-.game-error { font-size: 13px; color: var(--status-critical); }
+.game-start {
+  color: var(--surface-solid);
+  background: var(--accent);
+  border: none;
+}
+.game-start:hover {
+  filter: brightness(1.08);
+}
+.game-start:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.game-retry {
+  color: var(--status-critical);
+  background: transparent;
+  border: 1.5px solid var(--status-critical);
+}
+.game-retry:hover {
+  filter: brightness(1.08);
+}
+.game-retry.armed {
+  color: var(--surface-solid);
+  background: var(--status-critical);
+}
+.game-note {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.game-error {
+  font-size: 13px;
+  color: var(--status-critical);
+}
 
 /* --- 狭い画面 --- */
 @media (max-width: 560px) {
-  .page { padding: 28px 18px 60px; }
-  .tiles { grid-template-columns: 1fr; }
-  .tile.hero .tile-value { font-size: 60px; }
-  .page-header h1 { font-size: 23px; }
+  .page {
+    padding: 28px 18px 60px;
+  }
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+  .tile.hero .tile-value {
+    font-size: 60px;
+  }
+  .page-header h1 {
+    font-size: 23px;
+  }
 }

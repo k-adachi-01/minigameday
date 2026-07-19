@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+# No direct deploy (agents)
+
+- Agents must not run bare `cdk deploy`, `aws cloudformation deploy`, or destructive `aws s3` / `aws iam` mutations.
+- Route agent AWS-changing work through `$aws-sandbox-run` or `$aws-agent-lease` (`/Users/adachi/agent-skills/aws-sandbox-run`). See `docs/deployment.md`.
+- Humans may run `pnpm deploy` / `destroy` / `reset` / FIS CLI in their own terminal (two-layer policy).
+- Local completion for agents: `pnpm agent:check`.

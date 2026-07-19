@@ -1,15 +1,15 @@
-import { spawn } from 'node:child_process';
-import { readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
-import react from '@vitejs/plugin-react-oxc';
-import { DynamoDBClient, PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
-import { FisClient, StartExperimentCommand } from '@aws-sdk/client-fis';
-import { deriveFromEvents, findStartCandidate } from './src/scoring';
-import { generateReview } from './review-generator';
-import { collectDriftMaterial } from './drift-detector';
-import { AI_FEEDBACK_AUTHOR, type GameEvent, type GamedayData, type HintReveal } from './src/types';
+import { spawn } from "node:child_process";
+import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import react from "@vitejs/plugin-react-oxc";
+import { DynamoDBClient, PutItemCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { FisClient, StartExperimentCommand } from "@aws-sdk/client-fis";
+import { deriveFromEvents, findStartCandidate } from "./src/scoring";
+import { generateReview } from "./review-generator";
+import { collectDriftMaterial } from "./drift-detector";
+import { AI_FEEDBACK_AUTHOR, type GameEvent, type GamedayData, type HintReveal } from "./src/types";
 
 // ---------------------------------------------------------------------------
 // gameday.json への書き込みは全てこのヘルパを通す (dev サーバ内で直列化)。
@@ -25,7 +25,7 @@ function updateGamedayJson<T>(
   mutate: (data: GamedayData) => { changed: boolean; result: T },
 ): Promise<T> {
   const task = writeQueue.then(() => {
-    const data = JSON.parse(readFileSync(dataPath, 'utf8')) as GamedayData;
+    const data = JSON.parse(readFileSync(dataPath, "utf8")) as GamedayData;
     const { changed, result } = mutate(data);
     if (changed) {
       const tmp = `${dataPath}.tmp`;
@@ -42,21 +42,21 @@ function updateGamedayJson<T>(
 function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c: Buffer) => chunks.push(c));
-    req.on('end', () => {
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
       try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString() || '{}'));
+        resolve(JSON.parse(Buffer.concat(chunks).toString() || "{}"));
       } catch (e) {
         reject(e instanceof Error ? e : new Error(String(e)));
       }
     });
-    req.on('error', reject);
+    req.on("error", reject);
   });
 }
 
 function sendJson(res: ServerResponse, code: number, body: unknown): void {
   res.statusCode = code;
-  res.setHeader('content-type', 'application/json');
+  res.setHeader("content-type", "application/json");
   res.end(JSON.stringify(body));
 }
 
@@ -67,7 +67,7 @@ interface ApiResult {
 }
 
 function gamedayJsonPath(server: ViteDevServer): string {
-  return join(server.config.root, 'public', 'data', 'gameday.json');
+  return join(server.config.root, "public", "data", "gameday.json");
 }
 
 /**
@@ -78,16 +78,16 @@ function gamedayJsonPath(server: ViteDevServer): string {
  */
 function hintRevealApi(): Plugin {
   return {
-    name: 'gameday-hint-reveal-api',
+    name: "gameday-hint-reveal-api",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
-      server.middlewares.use('/api/reveal-hint', (req, res) => {
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
+      server.middlewares.use("/api/reveal-hint", (req, res) => {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
         void readJsonBody(req)
           .then((body) => {
             const { injectId, hintId } = body;
-            if (typeof injectId !== 'string' || typeof hintId !== 'string') {
-              return sendJson(res, 400, { error: 'injectId と hintId が必要' });
+            if (typeof injectId !== "string" || typeof hintId !== "string") {
+              return sendJson(res, 400, { error: "injectId と hintId が必要" });
             }
             return updateGamedayJson<ApiResult>(dataPath, (data) => {
               const inject = data.injects.find((i) => i.id === injectId);
@@ -95,7 +95,7 @@ function hintRevealApi(): Plugin {
               if (!hint) {
                 return {
                   changed: false,
-                  result: { code: 400, body: { error: '該当するヒントが gameday.json に無い' } },
+                  result: { code: 400, body: { error: "該当するヒントが gameday.json に無い" } },
                 };
               }
               data.hintReveals = data.hintReveals ?? [];
@@ -137,40 +137,49 @@ function hintRevealApi(): Plugin {
  */
 function ackApi(): Plugin {
   return {
-    name: 'gameday-ack-api',
+    name: "gameday-ack-api",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
-      server.middlewares.use('/api/ack', (req, res) => {
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
+      server.middlewares.use("/api/ack", (req, res) => {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
         void readJsonBody(req)
           .then((body) => {
             const { injectId } = body;
-            if (typeof injectId !== 'string') {
-              return sendJson(res, 400, { error: 'injectId が必要' });
+            if (typeof injectId !== "string") {
+              return sendJson(res, 400, { error: "injectId が必要" });
             }
             return updateGamedayJson<ApiResult>(dataPath, (data) => {
               const inject = data.injects.find((i) => i.id === injectId);
               if (!inject) {
-                return { changed: false, result: { code: 400, body: { error: '該当する injectId が無い' } } };
+                return {
+                  changed: false,
+                  result: { code: 400, body: { error: "該当する injectId が無い" } },
+                };
               }
               if (!inject.impactStartAt) {
                 return {
                   changed: false,
                   result: {
                     code: 409,
-                    body: { error: 'まだ影響が観測されていない (canary は green)。検知宣言は影響発生後に有効' },
+                    body: {
+                      error:
+                        "まだ影響が観測されていない (canary は green)。検知宣言は影響発生後に有効",
+                    },
                   },
                 };
               }
               if (inject.ackAt) {
-                return { changed: false, result: { code: 200, body: { ok: true, ackAt: inject.ackAt } } };
+                return {
+                  changed: false,
+                  result: { code: 200, body: { ok: true, ackAt: inject.ackAt } },
+                };
               }
               const now = new Date().toISOString();
               inject.ackAt = now;
               data.events = data.events ?? [];
               const key = `ACK#${injectId}`;
               if (!data.events.some((e) => e.key === key)) {
-                data.events.push({ key, type: 'ack', at: now, injectId });
+                data.events.push({ key, type: "ack", at: now, injectId });
               }
               deriveFromEvents(data); // detectionMinutes 等を即時反映 (冪等)
               return { changed: true, result: { code: 200, body: { ok: true, ackAt: now } } };
@@ -199,20 +208,20 @@ function ackApi(): Plugin {
  * dev のみ有効 (静的ビルドにこのエンドポイントは無い)。テーブル名は CDK 側の固定名と合わせる。
  */
 function scoreSyncApi(): Plugin {
-  const tableName = process.env.GAMEDAY_SCORE_TABLE ?? 'gameday-score';
+  const tableName = process.env.GAMEDAY_SCORE_TABLE ?? "gameday-score";
   // dashboard 起動時のリージョン。未設定なら SDK の既定解決に任せる。
   const ddb = new DynamoDBClient({});
   return {
-    name: 'gameday-score-sync-api',
+    name: "gameday-score-sync-api",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
-      server.middlewares.use('/api/score', (req, res) => {
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
+      server.middlewares.use("/api/score", (req, res) => {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
         void readJsonBody(req)
           .then((body) => {
             const total = Number(body.total);
             if (!Number.isFinite(total)) {
-              return sendJson(res, 400, { error: 'total (number) が必要' });
+              return sendJson(res, 400, { error: "total (number) が必要" });
             }
             // 読み取りも直列化キューを通す (手編集の tmp→rename と競合させない)
             return updateGamedayJson(dataPath, (data) => ({
@@ -224,7 +233,7 @@ function scoreSyncApi(): Plugin {
                   new PutItemCommand({
                     TableName: tableName,
                     Item: {
-                      pk: { S: 'SCORE' },
+                      pk: { S: "SCORE" },
                       total: { N: String(total) },
                       updatedAt: { S: new Date().toISOString() },
                       escalationEnabled: { BOOL: escalationEnabled },
@@ -242,7 +251,7 @@ function scoreSyncApi(): Plugin {
                 });
               });
           })
-          .catch(() => sendJson(res, 400, { error: 'invalid json' }));
+          .catch(() => sendJson(res, 400, { error: "invalid json" }));
       });
     },
   };
@@ -262,14 +271,15 @@ function scoreSyncApi(): Plugin {
 function reviewApi(): Plugin {
   let generating = false;
   return {
-    name: 'gameday-review-api',
+    name: "gameday-review-api",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
       // cdk drift はプロジェクトルートで実行する (dev サーバの root は dashboard/)
-      const projectRoot = join(server.config.root, '..');
-      server.middlewares.use('/api/review', (req, res) => {
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
-        if (generating) return sendJson(res, 409, { error: '講評を生成中。完了を待ってから再実行する' });
+      const projectRoot = join(server.config.root, "..");
+      server.middlewares.use("/api/review", (req, res) => {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
+        if (generating)
+          return sendJson(res, 409, { error: "講評を生成中。完了を待ってから再実行する" });
         generating = true;
         // 材料の読み取りも updateGamedayJson (直列化キュー) を通す (changed: false = 読むだけ)。
         // キュー外で readFileSync すると書き込みの tmp→rename と競合し Windows で EBUSY 等に
@@ -307,16 +317,16 @@ function reviewApi(): Plugin {
 function gameStartApi(): Plugin {
   const fis = new FisClient({});
   return {
-    name: 'gameday-start-api',
+    name: "gameday-start-api",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
-      server.middlewares.use('/api/start', (req, res) => {
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
+      server.middlewares.use("/api/start", (req, res) => {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
         void readJsonBody(req)
           .then((body) => {
             const { injectId } = body;
-            if (typeof injectId !== 'string') {
-              return sendJson(res, 400, { error: 'injectId が必要' });
+            if (typeof injectId !== "string") {
+              return sendJson(res, 400, { error: "injectId が必要" });
             }
             // 読み取りも直列化キューを通す (手編集の tmp→rename と競合させない)
             return updateGamedayJson(dataPath, (data) => ({
@@ -325,7 +335,8 @@ function gameStartApi(): Plugin {
             })).then(async (candidate) => {
               if (!candidate) {
                 return sendJson(res, 409, {
-                  error: '開始できない (既に開始済みか、experimentTemplateId 付きインジェクトが無い)',
+                  error:
+                    "開始できない (既に開始済みか、experimentTemplateId 付きインジェクトが無い)",
                 });
               }
               if (candidate.id !== injectId || !candidate.experimentTemplateId) {
@@ -348,7 +359,7 @@ function gameStartApi(): Plugin {
               }
             });
           })
-          .catch(() => sendJson(res, 400, { error: 'invalid json' }));
+          .catch(() => sendJson(res, 400, { error: "invalid json" }));
       });
     },
   };
@@ -365,36 +376,36 @@ function resetApi(): Plugin {
   const state: { running: boolean; ok?: boolean; finishedAt?: string } = { running: false };
   let tail: string[] = [];
   return {
-    name: 'gameday-reset-api',
+    name: "gameday-reset-api",
     configureServer(server: ViteDevServer) {
       // dev サーバの root は dashboard/ なのでプロジェクトルートは 1 つ上
-      const projectRoot = join(server.config.root, '..');
-      server.middlewares.use('/api/reset', (req, res) => {
-        if (req.method === 'GET') {
+      const projectRoot = join(server.config.root, "..");
+      server.middlewares.use("/api/reset", (req, res) => {
+        if (req.method === "GET") {
           return sendJson(res, 200, { ...state, tail: tail.slice(-5) });
         }
-        if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
-        if (state.running) return sendJson(res, 409, { error: '周回リセットを実行中' });
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
+        if (state.running) return sendJson(res, 409, { error: "周回リセットを実行中" });
 
         state.running = true;
         state.ok = undefined;
         state.finishedAt = undefined;
         tail = [];
         // Windows では npm が npm.cmd のため shell 経由で起動する (reset script の runCli と同じ)
-        const child = spawn('npm', ['run', 'reset'], { cwd: projectRoot, shell: true });
+        const child = spawn("npm", ["run", "reset"], { cwd: projectRoot, shell: true });
         const onChunk = (chunk: Buffer) => {
           tail.push(...chunk.toString().split(/\r?\n/).filter(Boolean));
           tail = tail.slice(-30);
         };
-        child.stdout?.on('data', onChunk);
-        child.stderr?.on('data', onChunk);
-        child.on('error', (e) => {
+        child.stdout?.on("data", onChunk);
+        child.stderr?.on("data", onChunk);
+        child.on("error", (e) => {
           tail.push(String(e));
           state.running = false;
           state.ok = false;
           state.finishedAt = new Date().toISOString();
         });
-        child.on('close', (code) => {
+        child.on("close", (code) => {
           state.running = false;
           state.ok = code === 0;
           state.finishedAt = new Date().toISOString();
@@ -412,12 +423,12 @@ function toGameEvent(raw: Record<string, { S?: string } | undefined>): GameEvent
   const at = raw.at?.S;
   const type = raw.type?.S;
   if (!key || !at) return null;
-  if (type === 'alarm') {
+  if (type === "alarm") {
     const state = raw.state?.S;
-    if (state !== 'ALARM' && state !== 'OK') return null;
+    if (state !== "ALARM" && state !== "OK") return null;
     return { key, type, at, alarmName: raw.alarmName?.S, state, reason: raw.reason?.S };
   }
-  if (type === 'experiment') {
+  if (type === "experiment") {
     return {
       key,
       type,
@@ -440,12 +451,12 @@ function toGameEvent(raw: Record<string, { S?: string } | undefined>): GameEvent
  * テーブルは小さい (1 ゲームで数十アイテム) ので Scan で十分。
  */
 function gameEventsSync(): Plugin {
-  const tableName = process.env.GAMEDAY_SCORE_TABLE ?? 'gameday-score';
+  const tableName = process.env.GAMEDAY_SCORE_TABLE ?? "gameday-score";
   const ddb = new DynamoDBClient({});
   const SYNC_MS = 5000;
-  let lastError = '';
+  let lastError = "";
   return {
-    name: 'gameday-events-sync',
+    name: "gameday-events-sync",
     configureServer(server: ViteDevServer) {
       const dataPath = gamedayJsonPath(server);
       const tick = async () => {
@@ -456,17 +467,15 @@ function gameEventsSync(): Plugin {
             const page = await ddb.send(
               new ScanCommand({
                 TableName: tableName,
-                FilterExpression: 'begins_with(pk, :prefix)',
-                ExpressionAttributeValues: { ':prefix': { S: 'EVENT#' } },
+                FilterExpression: "begins_with(pk, :prefix)",
+                ExpressionAttributeValues: { ":prefix": { S: "EVENT#" } },
                 ExclusiveStartKey: startKey as never,
               }),
             );
             items.push(...((page.Items ?? []) as Record<string, { S?: string }>[]));
             startKey = page.LastEvaluatedKey as never;
           } while (startKey);
-          const incoming = items
-            .map(toGameEvent)
-            .filter((e): e is GameEvent => e !== null);
+          const incoming = items.map(toGameEvent).filter((e): e is GameEvent => e !== null);
           await updateGamedayJson(dataPath, (data) => {
             let changed = false;
             const known = new Set((data.events ?? []).map((e) => e.key));
@@ -482,8 +491,8 @@ function gameEventsSync(): Plugin {
             return { changed, result: undefined };
           });
           if (lastError) {
-            console.log('[gameday] events 同期が復帰した');
-            lastError = '';
+            console.log("[gameday] events 同期が復帰した");
+            lastError = "";
           }
         } catch (e) {
           // ベストエフォート: 同じエラーの連呼はしない
@@ -496,7 +505,7 @@ function gameEventsSync(): Plugin {
       };
       void tick();
       const timer = setInterval(() => void tick(), SYNC_MS);
-      server.httpServer?.on('close', () => clearInterval(timer));
+      server.httpServer?.on("close", () => clearInterval(timer));
     },
   };
 }

@@ -1,9 +1,7 @@
 {
-  "app": "npx tsx bin/minigameday.ts",
+  "app": "pnpm exec tsx bin/minigameday.ts",
   "watch": {
-    "include": [
-      "**"
-    ],
+    "include": ["**"],
     "exclude": [
       "README.md",
       "cdk*.json",
@@ -12,6 +10,7 @@
       "tsconfig.json",
       "package*.json",
       "yarn.lock",
+      "pnpm-lock.yaml",
       "node_modules",
       "test"
     ]
@@ -95,10 +94,7 @@
     "@aws-cdk/core:enablePartitionLiterals": true,
     "@aws-cdk/core:explicitStackTags": true,
     "@aws-cdk/core:includePrefixInUniqueNameGeneration": true,
-    "@aws-cdk/core:target-partitions": [
-      "aws",
-      "aws-cn"
-    ],
+    "@aws-cdk/core:target-partitions": ["aws", "aws-cn"],
     "@aws-cdk/core:validateSnapshotRemovalPolicy": true,
     "@aws-cdk/custom-resources:logApiResponseDataPropertyTrueDefault": false,
     "@aws-cdk/customresources:installLatestAwsSdkDefault": false,

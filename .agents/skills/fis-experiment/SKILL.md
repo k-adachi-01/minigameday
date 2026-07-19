@@ -14,20 +14,20 @@ GameDay シナリオを AWS FIS 実験テンプレートとして `lib/construct
 2. **アクション仕様を確認する** — まず [references/fis-actions.md](references/fis-actions.md) を読む(この 3 層構成で使う主要アクションの検証済みメモ)。そこに無いアクション・パラメータは AWS Knowledge MCP で FIS Actions reference を確認する。FIS は機能追加が速く、記憶にあるパラメータ名は古いことがある。
 3. **CDK で実装する** — `aws-cdk-lib/aws-fis` は L1 (`CfnExperimentTemplate`) のみ。L2 を探さない。下の「実装の型」に従う。
 4. **安全装置チェックリスト**を全項目 yes にする。
-5. **テストを書く** — `aws-cdk-unit-testing` スキルの判断基準に従う。最低限「停止条件が設定されている」「selectionMode が意図した値である」ことは fine-grained assertion で固定する。この 2 つは壊れても synth が通ってしまい、実験当日に事故として発覚するため。
+5. **テストを書く** — `cdk-unit-test` スキルの判断基準に従う。最低限「停止条件が設定されている」「selectionMode が意図した値である」ことは fine-grained assertion で固定する。この 2 つは壊れても synth が通ってしまい、実験当日に事故として発覚するため。
 
 ## 実装の型
 
 ```ts
-import * as fis from 'aws-cdk-lib/aws-fis';
+import * as fis from "aws-cdk-lib/aws-fis";
 
 // 停止条件: 顧客影響 (5xx) が想定の爆発半径を超えたら実験を強制停止する。
 // ★このプロジェクトの実装 (lib/constructs/observability.ts の gameday-5xx-stop-condition) と同じ形。
 //   canary SuccessPercent は振り返りの主指標で、停止条件には 5xx を使っている。
-const stopAlarm = new cloudwatch.Alarm(this, 'Http5xxStopAlarm', {
-  alarmName: 'gameday-5xx-stop-condition',
+const stopAlarm = new cloudwatch.Alarm(this, "Http5xxStopAlarm", {
+  alarmName: "gameday-5xx-stop-condition",
   metric: new cloudwatch.MathExpression({
-    expression: 'elb + target',
+    expression: "elb + target",
     usingMetrics: { elb: elb5xx, target: target5xx }, // ALB発/Target発 5xx (Sum, 1分)
     period: cdk.Duration.minutes(1),
   }),
@@ -40,20 +40,20 @@ const stopAlarm = new cloudwatch.Alarm(this, 'Http5xxStopAlarm', {
   treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
 });
 
-const role = new iam.Role(this, 'GamedayFisRole', {
-  roleName: 'gameday-fis-role',
-  assumedBy: new iam.ServicePrincipal('fis.amazonaws.com'),
+const role = new iam.Role(this, "GamedayFisRole", {
+  roleName: "gameday-fis-role",
+  assumedBy: new iam.ServicePrincipal("fis.amazonaws.com"),
 });
 // 権限はアクションごとの必要最小限 (references/fis-actions.md の権限一覧を見る)
 
-new fis.CfnExperimentTemplate(this, 'StopTaskExperiment', {
-  description: 'scenario-01: Fargate タスク 50% 停止でもユーザー影響なく自己回復するか',
+new fis.CfnExperimentTemplate(this, "StopTaskExperiment", {
+  description: "scenario-01: Fargate タスク 50% 停止でもユーザー影響なく自己回復するか",
   roleArn: role.roleArn,
-  stopConditions: [{ source: 'aws:cloudwatch:alarm', value: stopAlarm.alarmArn }],
+  stopConditions: [{ source: "aws:cloudwatch:alarm", value: stopAlarm.alarmArn }],
   targets: {
-    'gameday-tasks': {
-      resourceType: 'aws:ecs:task',
-      selectionMode: 'PERCENT(50)', // 爆発半径: 稼働タスクの半分まで
+    "gameday-tasks": {
+      resourceType: "aws:ecs:task",
+      selectionMode: "PERCENT(50)", // 爆発半径: 稼働タスクの半分まで
       parameters: {
         cluster: props.cluster.clusterName,
         service: props.service.serviceName,
@@ -61,9 +61,9 @@ new fis.CfnExperimentTemplate(this, 'StopTaskExperiment', {
     },
   },
   actions: {
-    'stop-tasks': {
-      actionId: 'aws:ecs:stop-task',
-      targets: { Tasks: 'gameday-tasks' },
+    "stop-tasks": {
+      actionId: "aws:ecs:stop-task",
+      targets: { Tasks: "gameday-tasks" },
     },
   },
   // 実験ログ: 実験タイムライン・アクション詳細を CloudWatch Logs に残す (振り返りの素材)。
@@ -79,17 +79,17 @@ new fis.CfnExperimentTemplate(this, 'StopTaskExperiment', {
     outputs: {
       experimentReportS3Configuration: {
         bucketName: reportBucket.bucketName,
-        prefix: 'fis-reports/',
+        prefix: "fis-reports/",
       },
     },
     dataSources: {
       // dashboardIdentifier は名前でなく ARN (dashboard.dashboardArn)。名前を渡すと deploy 時に InvalidRequest
       cloudWatchDashboards: [{ dashboardIdentifier: dashboard.dashboardArn }],
     },
-    preExperimentDuration: 'PT10M',
-    postExperimentDuration: 'PT10M',
+    preExperimentDuration: "PT10M",
+    postExperimentDuration: "PT10M",
   },
-  tags: { Name: 'gameday-scenario-01-stop-task', gameday: 'true' },
+  tags: { Name: "gameday-scenario-01-stop-task", gameday: "true" },
 });
 ```
 

@@ -1,8 +1,8 @@
-import { test, expect } from 'vitest';
-import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
-import { GamedayStack } from '../lib/gameday-stack';
-import { LegacyAppStack } from '../lib/legacy-app-stack';
+import { test, expect } from "vitest";
+import * as cdk from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
+import { GamedayStack } from "../lib/gameday-stack";
+import { LegacyAppStack } from "../lib/legacy-app-stack";
 
 /**
  * スナップショットテスト (aws-cdk-development スキル: 全プロジェクト最初に入れるべきテスト)。
@@ -15,17 +15,17 @@ import { LegacyAppStack } from '../lib/legacy-app-stack';
  */
 function maskedTemplate(stack: cdk.Stack): unknown {
   const json = JSON.stringify(Template.fromStack(stack).toJSON());
-  return JSON.parse(json.replace(/[a-f0-9]{64}/g, '[ASSET_HASH]'));
+  return JSON.parse(json.replace(/[a-f0-9]{64}/g, "[ASSET_HASH]"));
 }
 
-test('snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り返り + 障害注入)', () => {
+test("snapshot: 本体スタック (GamedayStack = 対象アプリ + 振り返り + 障害注入)", () => {
   const app = new cdk.App();
-  const stack = new GamedayStack(app, 'GameDay');
-  expect(maskedTemplate(stack)).toMatchSnapshot('GameDay');
+  const stack = new GamedayStack(app, "GameDay");
+  expect(maskedTemplate(stack)).toMatchSnapshot("GameDay");
 });
 
-test('snapshot: scenario-03 出発点スタック (LegacyApp)', () => {
+test("snapshot: scenario-03 出発点スタック (LegacyApp)", () => {
   const app = new cdk.App();
-  const legacy = new LegacyAppStack(app, 'Legacy');
-  expect(maskedTemplate(legacy)).toMatchSnapshot('LegacyApp');
+  const legacy = new LegacyAppStack(app, "Legacy");
+  expect(maskedTemplate(legacy)).toMatchSnapshot("LegacyApp");
 });

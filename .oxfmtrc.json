@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "ignorePatterns": [
+    "cdk.out/**",
+    "node_modules/**",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "dashboard/dist/**",
+    "dashboard/data-archive/**",
+    "dashboard/public/data/**"
+  ]
+}

@@ -5,11 +5,11 @@ type: rebuild
 status: draft
 fis_actions: [aws:network:disrupt-connectivity]
 prerequisites:
-  - dr-standby-osaka          # 大阪 (ap-northeast-3) の VPC + ALB + Fargate 一式 (縮小構成で常時稼働)
-  - aurora-global-database    # 既存 Aurora を Global Database 化し大阪にセカンダリクラスタ
-  - route53-hosted-zone       # 運営保有ドメインの public hosted zone + app レコード (ALIAS, 東京 ALB)
-  - canary-dns-target         # canary の URL 環境変数を ALB DNS 名 → Route 53 レコード名に変更
-  - participant-iam-role      # 参加者用ロール (Route 53 変更 + RDS フェイルオーバーのみ許可)
+  - dr-standby-osaka # 大阪 (ap-northeast-3) の VPC + ALB + Fargate 一式 (縮小構成で常時稼働)
+  - aurora-global-database # 既存 Aurora を Global Database 化し大阪にセカンダリクラスタ
+  - route53-hosted-zone # 運営保有ドメインの public hosted zone + app レコード (ALIAS, 東京 ALB)
+  - canary-dns-target # canary の URL 環境変数を ALB DNS 名 → Route 53 レコード名に変更
+  - participant-iam-role # 参加者用ロール (Route 53 変更 + RDS フェイルオーバーのみ許可)
 estimated_duration: 90m
 difficulty: advanced
 ---
@@ -46,12 +46,12 @@ difficulty: advanced
 
 `aws:network:disrupt-connectivity`
 
-| 項目 | 値 |
-|---|---|
-| アクション | `aws:network:disrupt-connectivity` |
-| パラメータ | `scope: all`、`duration: PT60M` (= 制限時間。後述) |
-| ターゲット | `aws:ec2:subnet`、`selectionMode: ALL`、**GameDay 本体スタック (TargetApp) の VPC に限定** (VPC ID フィルタ、またはサブネットへの `GameDayTarget=true` タグ) |
-| 爆発半径 | **東京の GameDay VPC の全サブネット (2 AZ × public/app/data = 6 つ) のみ**。仕組みはクローン NACL (`managedByFIS=true` タグ付き) の一時付け替えで、実験終了時に FIS が自動復元する。他 VPC・他リージョン・AWS コントロールプレーンには波及しない |
+| 項目       | 値                                                                                                                                                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| アクション | `aws:network:disrupt-connectivity`                                                                                                                                                                                                               |
+| パラメータ | `scope: all`、`duration: PT60M` (= 制限時間。後述)                                                                                                                                                                                               |
+| ターゲット | `aws:ec2:subnet`、`selectionMode: ALL`、**GameDay 本体スタック (TargetApp) の VPC に限定** (VPC ID フィルタ、またはサブネットへの `GameDayTarget=true` タグ)                                                                                     |
+| 爆発半径   | **東京の GameDay VPC の全サブネット (2 AZ × public/app/data = 6 つ) のみ**。仕組みはクローン NACL (`managedByFIS=true` タグ付き) の一時付け替えで、実験終了時に FIS が自動復元する。他 VPC・他リージョン・AWS コントロールプレーンには波及しない |
 
 `duration` を制限時間と同じ **60 分固定**にする理由:
 
@@ -71,7 +71,7 @@ difficulty: advanced
 2. **Aurora Global Database 化** — 既存 app-stack の Database を Global Database のプライマリにし、大阪にセカンダリクラスタ (Serverless v2, 0.5 ACU, リーダー 1 台) を追加。Aurora MySQL 3.10.4 は東京・大阪とも Global Database 対応を確認済み (2026-07-11)
 3. **Route 53 public hosted zone** — 運営保有のドメイン。`app.<domain>` の **ALIAS A レコード → 東京 ALB** (ALIAS のため TTL は実質 60 秒)。シンプルルーティングのまま置く (フェイルオーバールーティングを事前設定してしまうと自動切替になり、参加者の仕事がなくなる)
 4. **canary の向き先変更** — observability-stack の canary URL 環境変数を `http://<東京ALB DNS>` から `http://app.<domain>` に変更。**これにより参加者の DNS 切替だけで canary が緑に戻り、復旧完了が自動判定できる**
-   - *ドメインが用意できない場合のフォールバック (Plan B)*: canary は東京 ALB 直指しのままにし、参加者の切替タスクを「`aws synthetics update-canary` で canary の URL 環境変数を大阪 ALB に変更する」に置き換える (= ユーザー告知による URL 変更、という設定の劣化 DR)。この場合 canary の変更が cdk drift に出る
+   - _ドメインが用意できない場合のフォールバック (Plan B)_: canary は東京 ALB 直指しのままにし、参加者の切替タスクを「`aws synthetics update-canary` で canary の URL 環境変数を大阪 ALB に変更する」に置き換える (= ユーザー告知による URL 変更、という設定の劣化 DR)。この場合 canary の変更が cdk drift に出る
 5. **参加者 IAM ロール** — 与える: 対象 hosted zone への `route53:ChangeResourceRecordSets` / `route53:List*`、`rds:FailoverGlobalCluster`・`rds:RemoveFromGlobalCluster` (対象クラスタ限定)・`rds:Describe*`、`ecs:Describe*/List*`、`elasticloadbalancing:Describe*`、CloudWatch / Synthetics の読み取り。与えない: EC2 書き込み系 (NACL 修復 = 反則の抑止)、`fis:StopExperiment` (運営専用)
 6. **運営用 kill switch** — カスタムメトリクス `GameDay/Abort` に対するアラーム `gameday-manual-abort` (>= 1 で ALARM、`treatMissingData: notBreaching`)。停止条件セクション参照
 7. (推奨) `gameday-review` ダッシュボードに大阪 ALB の RequestCount / HealthyHostCount のクロスリージョンウィジェットを追加 — FIS レポートに大阪側の回復も写り込む
@@ -90,14 +90,14 @@ difficulty: advanced
 
 ## 期待する振る舞い
 
-| 時刻 (目安) | 事象 |
-|---|---|
-| T+0 | FIS 開始。1 分以内にクローン NACL が全サブネットに適用され、東京 VPC が外部から不通に |
-| T+1〜3 分 | canary が赤に (1 分間隔 + タイムアウト。2〜3 回目の実行までに確実に失敗)。**canary の赤がゲームの進行表示になる** |
-| T+3〜10 分 | 参加者が検知・切り分け。東京側では ALB ヘルスチェック失敗 → ECS タスク入替ループが始まる (イメージ取得も不通のため起動失敗が続く) — **これは放置してよい。実験終了後に自己回復する** |
-| T+10〜40 分 | DR 発動: Aurora フェイルオーバー (昇格自体は数分)、Route 53 切替 (ALIAS 反映 + TTL で数分) |
-| 切替後 2〜3 分 | canary が緑に復帰 = 復旧。**RTO 実測は赤の初回 → 緑の初回で 20〜45 分を想定** |
-| T+60 分 | FIS 実験が自然終了し NACL 自動復元。東京 ECS は数分で RunningTaskCount=2 に自己回復 |
+| 時刻 (目安)    | 事象                                                                                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| T+0            | FIS 開始。1 分以内にクローン NACL が全サブネットに適用され、東京 VPC が外部から不通に                                                                                                |
+| T+1〜3 分      | canary が赤に (1 分間隔 + タイムアウト。2〜3 回目の実行までに確実に失敗)。**canary の赤がゲームの進行表示になる**                                                                    |
+| T+3〜10 分     | 参加者が検知・切り分け。東京側では ALB ヘルスチェック失敗 → ECS タスク入替ループが始まる (イメージ取得も不通のため起動失敗が続く) — **これは放置してよい。実験終了後に自己回復する** |
+| T+10〜40 分    | DR 発動: Aurora フェイルオーバー (昇格自体は数分)、Route 53 切替 (ALIAS 反映 + TTL で数分)                                                                                           |
+| 切替後 2〜3 分 | canary が緑に復帰 = 復旧。**RTO 実測は赤の初回 → 緑の初回で 20〜45 分を想定**                                                                                                        |
+| T+60 分        | FIS 実験が自然終了し NACL 自動復元。東京 ECS は数分で RunningTaskCount=2 に自己回復                                                                                                  |
 
 模擬ゆえの注意: 東京の RDS は実際には健在なので、`failover-global-cluster --allow-data-loss` は即座に成功し、データ損失も起きない (本物ではレプリケーション遅延分を失う)。また昇格前でも大阪アプリの "/" (読み取り) が 200 を返す可能性がある — **昇格前後の大阪アプリの挙動はリハーサルで実測して本欄を更新すること**。いずれにせよ canary 緑だけでは書き込み復旧の証明にならない。
 

@@ -18,13 +18,10 @@
 // scenario-03 で参加者が手で作ったスタック外リソース (ECS サービス等) はここでは戻せない —
 // scenarios/03-ec2-to-ecs-rebuild.md の棚卸しリストに従って手動で削除する。
 
-import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
-import {
-  CloudFormationClient,
-  DescribeStacksCommand,
-} from '@aws-sdk/client-cloudformation';
+import { readFileSync, writeFileSync, renameSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { CloudFormationClient, DescribeStacksCommand } from "@aws-sdk/client-cloudformation";
 import {
   FisClient,
   ListExperimentTemplatesCommand,
@@ -32,34 +29,34 @@ import {
   StopExperimentCommand,
   GetExperimentCommand,
   type ListExperimentsCommandOutput,
-} from '@aws-sdk/client-fis';
+} from "@aws-sdk/client-fis";
 import {
   DynamoDBClient,
   ScanCommand,
   BatchWriteItemCommand,
   type WriteRequest,
-} from '@aws-sdk/client-dynamodb';
+} from "@aws-sdk/client-dynamodb";
 
-const ROOT = join(__dirname, '..');
-const DATA_PATH = join(ROOT, 'dashboard', 'public', 'data', 'gameday.json');
-const ARCHIVE_DIR = join(ROOT, 'dashboard', 'data-archive');
-const TABLE_NAME = process.env.GAMEDAY_SCORE_TABLE ?? 'gameday-score';
-const MAIN_STACK = 'GameDay';
+const ROOT = join(__dirname, "..");
+const DATA_PATH = join(ROOT, "dashboard", "public", "data", "gameday.json");
+const ARCHIVE_DIR = join(ROOT, "dashboard", "data-archive");
+const TABLE_NAME = process.env.GAMEDAY_SCORE_TABLE ?? "gameday-score";
+const MAIN_STACK = "GameDay";
 
 // FIS の実行中扱いのステータス (これらは停止対象。stopping は停止待ちで拾う)
-const ACTIVE_STATUSES = new Set(['pending', 'initiating', 'running']);
+const ACTIVE_STATUSES = new Set(["pending", "initiating", "running"]);
 
 // gameday.json のインジェクトで「セットアップ時に運営が書く静的フィールド」。
 // これ以外 (導出フィールド・実績・スコア類) はリセットで落とす。
 const KEEP_INJECT_FIELDS = [
-  'id',
-  'scenarioId',
-  'round',
-  'title',
-  'instruction',
-  'maxScore',
-  'hints',
-  'experimentTemplateId',
+  "id",
+  "scenarioId",
+  "round",
+  "title",
+  "instruction",
+  "maxScore",
+  "hints",
+  "experimentTemplateId",
 ] as const;
 
 interface Options {
@@ -72,9 +69,9 @@ interface Options {
 function parseArgs(argv: string[]): Options {
   const opts: Options = { dryRun: false, skipDeploy: false, skipDrift: false, cdkArgs: [] };
   for (const arg of argv) {
-    if (arg === '--dry-run') opts.dryRun = true;
-    else if (arg === '--skip-deploy') opts.skipDeploy = true;
-    else if (arg === '--skip-drift') opts.skipDrift = true;
+    if (arg === "--dry-run") opts.dryRun = true;
+    else if (arg === "--skip-deploy") opts.skipDeploy = true;
+    else if (arg === "--skip-drift") opts.skipDrift = true;
     else opts.cdkArgs.push(arg);
   }
   return opts;
@@ -90,7 +87,7 @@ function sleep(ms: number): Promise<void> {
 
 /** npx コマンドを stdio 引き継ぎで実行 (Windows では .cmd のため shell 経由が必要) */
 function runCli(args: string[]): number {
-  const result = spawnSync('npx', args, { stdio: 'inherit', shell: true, cwd: ROOT });
+  const result = spawnSync("npx", args, { stdio: "inherit", shell: true, cwd: ROOT });
   return result.status ?? 1;
 }
 
@@ -100,7 +97,7 @@ async function ensureStackDeployed(cfn: CloudFormationClient): Promise<void> {
     await cfn.send(new DescribeStacksCommand({ StackName: MAIN_STACK }));
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('does not exist')) {
+    if (msg.includes("does not exist")) {
       throw new Error(
         `スタック ${MAIN_STACK} が未デプロイ。周回リセットはデプロイ済み環境が対象 — 初回は npm run deploy を使う`,
       );
@@ -117,7 +114,7 @@ async function stopRunningExperiments(fis: FisClient, dryRun: boolean): Promise<
   do {
     const page = await fis.send(new ListExperimentTemplatesCommand({ nextToken }));
     for (const t of page.experimentTemplates ?? []) {
-      if (t.id && t.tags?.Name?.startsWith('gameday-')) templateIds.add(t.id);
+      if (t.id && t.tags?.Name?.startsWith("gameday-")) templateIds.add(t.id);
     }
     nextToken = page.nextToken;
   } while (nextToken);
@@ -130,7 +127,7 @@ async function stopRunningExperiments(fis: FisClient, dryRun: boolean): Promise<
       new ListExperimentsCommand({ nextToken }),
     );
     for (const exp of page.experiments ?? []) {
-      const status = exp.state?.status ?? '';
+      const status = exp.state?.status ?? "";
       if (!exp.id || !ACTIVE_STATUSES.has(status)) continue;
       if (exp.experimentTemplateId && !templateIds.has(exp.experimentTemplateId)) continue;
       active.push({ id: exp.id, status });
@@ -139,7 +136,7 @@ async function stopRunningExperiments(fis: FisClient, dryRun: boolean): Promise<
   } while (nextToken);
 
   if (active.length === 0) {
-    log('   実行中の実験なし');
+    log("   実行中の実験なし");
     return;
   }
   for (const exp of active) {
@@ -157,13 +154,15 @@ async function stopRunningExperiments(fis: FisClient, dryRun: boolean): Promise<
   for (const exp of active) {
     for (;;) {
       const res = await fis.send(new GetExperimentCommand({ id: exp.id }));
-      const status = res.experiment?.state?.status ?? '';
-      if (!ACTIVE_STATUSES.has(status) && status !== 'stopping') {
+      const status = res.experiment?.state?.status ?? "";
+      if (!ACTIVE_STATUSES.has(status) && status !== "stopping") {
         log(`   ${exp.id} → ${status}`);
         break;
       }
       if (Date.now() > deadline) {
-        throw new Error(`実験 ${exp.id} が 3 分待っても止まらない (現在: ${status})。手で確認して再実行を`);
+        throw new Error(
+          `実験 ${exp.id} が 3 分待っても止まらない (現在: ${status})。手で確認して再実行を`,
+        );
       }
       await sleep(5000);
     }
@@ -179,7 +178,7 @@ async function truncateScoreTable(ddb: DynamoDBClient, dryRun: boolean): Promise
       const page = await ddb.send(
         new ScanCommand({
           TableName: TABLE_NAME,
-          ProjectionExpression: 'pk',
+          ProjectionExpression: "pk",
           ExclusiveStartKey: startKey as never,
         }),
       );
@@ -190,7 +189,7 @@ async function truncateScoreTable(ddb: DynamoDBClient, dryRun: boolean): Promise
       startKey = page.LastEvaluatedKey as never;
     } while (startKey);
   } catch (e) {
-    if (e instanceof Error && e.name === 'ResourceNotFoundException') {
+    if (e instanceof Error && e.name === "ResourceNotFoundException") {
       log(`   テーブル ${TABLE_NAME} が無い (スタック未デプロイ?) — スキップ`);
       return;
     }
@@ -198,15 +197,15 @@ async function truncateScoreTable(ddb: DynamoDBClient, dryRun: boolean): Promise
   }
 
   if (keys.length === 0) {
-    log('   アイテムなし (既にクリーン)');
+    log("   アイテムなし (既にクリーン)");
     return;
   }
   const summary = new Map<string, number>();
   for (const k of keys) {
-    const kind = k.pk.S.split('#')[0];
+    const kind = k.pk.S.split("#")[0];
     summary.set(kind, (summary.get(kind) ?? 0) + 1);
   }
-  const detail = [...summary.entries()].map(([k, n]) => `${k}×${n}`).join(', ');
+  const detail = [...summary.entries()].map(([k, n]) => `${k}×${n}`).join(", ");
   if (dryRun) {
     log(`   [dry-run] 削除対象: ${keys.length} アイテム (${detail})`);
     return;
@@ -230,23 +229,25 @@ async function truncateScoreTable(ddb: DynamoDBClient, dryRun: boolean): Promise
 
 /** ステップ 4: gameday.json をアーカイブしてインジェクト定義だけの初期状態に戻す */
 function resetGamedayJson(dryRun: boolean): void {
-  const raw = readFileSync(DATA_PATH, 'utf8');
+  const raw = readFileSync(DATA_PATH, "utf8");
   const data = JSON.parse(raw) as Record<string, unknown>;
   const injects = (data.injects ?? []) as Record<string, unknown>[];
 
   if (dryRun) {
-    const dynamic = ['events', 'feedback', 'hintReveals']
+    const dynamic = ["events", "feedback", "hintReveals"]
       .filter((k) => {
         const v = data[k];
         return Array.isArray(v) ? v.length > 0 : v !== undefined;
       })
-      .join(', ');
-    log(`   [dry-run] インジェクト ${injects.length} 件を初期化。クリア対象: ${dynamic || '(なし)'}`);
+      .join(", ");
+    log(
+      `   [dry-run] インジェクト ${injects.length} 件を初期化。クリア対象: ${dynamic || "(なし)"}`,
+    );
     return;
   }
 
   mkdirSync(ARCHIVE_DIR, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const archivePath = join(ARCHIVE_DIR, `gameday-${stamp}.json`);
   writeFileSync(archivePath, raw);
 
@@ -260,7 +261,7 @@ function resetGamedayJson(dryRun: boolean): void {
     for (const field of KEEP_INJECT_FIELDS) {
       if (inject[field] !== undefined) out[field] = inject[field];
     }
-    out.status = 'pending';
+    out.status = "pending";
     return out;
   });
   reset.feedback = []; // AI 講評含む KPT は持ち越さない (前回分は archive に残る)
@@ -277,21 +278,29 @@ function resetGamedayJson(dryRun: boolean): void {
 
 async function main(): Promise<void> {
   const opts = parseArgs(process.argv.slice(2));
-  const mode = opts.dryRun ? ' (dry-run: 変更なし)' : '';
+  const mode = opts.dryRun ? " (dry-run: 変更なし)" : "";
   log(`=== GameDay 周回リセット${mode} ===`);
 
-  log('[0/5] スタックの確認');
+  log("[0/5] スタックの確認");
   await ensureStackDeployed(new CloudFormationClient({}));
   log(`   ${MAIN_STACK} はデプロイ済み`);
 
-  log('[1/5] 実行中の FIS 実験を停止');
+  log("[1/5] 実行中の FIS 実験を停止");
   await stopRunningExperiments(new FisClient({}), opts.dryRun);
 
-  log('[2/5] ドリフトをコードの状態へ revert (cdk deploy --all --revert-drift)');
+  log("[2/5] ドリフトをコードの状態へ revert (cdk deploy --all --revert-drift)");
   if (opts.dryRun || opts.skipDeploy) {
-    log('   スキップ');
+    log("   スキップ");
   } else {
-    const args = ['cdk', 'deploy', '--all', '--revert-drift', '--require-approval', 'never', ...opts.cdkArgs];
+    const args = [
+      "cdk",
+      "deploy",
+      "--all",
+      "--revert-drift",
+      "--require-approval",
+      "never",
+      ...opts.cdkArgs,
+    ];
     const code = runCli(args);
     if (code !== 0) throw new Error(`cdk deploy --revert-drift が失敗した (exit ${code})`);
   }
@@ -299,26 +308,26 @@ async function main(): Promise<void> {
   log(`[3/5] ゲーム状態のワイプ (DynamoDB ${TABLE_NAME})`);
   await truncateScoreTable(new DynamoDBClient({}), opts.dryRun);
 
-  log('[4/5] gameday.json の初期化');
+  log("[4/5] gameday.json の初期化");
   resetGamedayJson(opts.dryRun);
 
-  log('[5/5] ドリフト確認 (cdk drift --fail)');
+  log("[5/5] ドリフト確認 (cdk drift --fail)");
   if (opts.dryRun || opts.skipDrift) {
-    log('   スキップ');
-  } else if (runCli(['cdk', 'drift', '--fail']) !== 0) {
-    log('⚠ ドリフトが残っている。スタック外の手動リソース (scenario-03 の復旧物など) は revert の');
-    log('  対象外なので、シナリオの棚卸しリストに従って手動で片付けてから再確認する。');
+    log("   スキップ");
+  } else if (runCli(["cdk", "drift", "--fail"]) !== 0) {
+    log("⚠ ドリフトが残っている。スタック外の手動リソース (scenario-03 の復旧物など) は revert の");
+    log("  対象外なので、シナリオの棚卸しリストに従って手動で片付けてから再確認する。");
     process.exitCode = 1;
     return;
   }
 
-  log('');
+  log("");
   if (opts.dryRun) {
-    log('dry-run 完了 (何も変更していない)。本実行は npm run reset。');
+    log("dry-run 完了 (何も変更していない)。本実行は npm run reset。");
     return;
   }
-  log('リセット完了。canary が緑に戻るまで数分待ってから次のラウンドを開始する。');
-  log('(ダッシュボードは開き直せば初期状態。FIS テンプレート ID は変わっていない)');
+  log("リセット完了。canary が緑に戻るまで数分待ってから次のラウンドを開始する。");
+  log("(ダッシュボードは開き直せば初期状態。FIS テンプレート ID は変わっていない)");
 }
 
 main().catch((e: unknown) => {

@@ -1,9 +1,9 @@
-import type { Feedback, FeedbackType } from './types';
+import type { Feedback, FeedbackType } from "./types";
 
 const KPT_COLUMNS: { type: FeedbackType; label: string; sub: string; color: string }[] = [
-  { type: 'keep', label: 'Keep', sub: '続けたいこと', color: 'var(--status-good)' },
-  { type: 'problem', label: 'Problem', sub: '課題', color: 'var(--status-critical)' },
-  { type: 'try', label: 'Try', sub: '次に試すこと', color: 'var(--series-1)' },
+  { type: "keep", label: "Keep", sub: "続けたいこと", color: "var(--status-good)" },
+  { type: "problem", label: "Problem", sub: "課題", color: "var(--status-critical)" },
+  { type: "try", label: "Try", sub: "次に試すこと", color: "var(--series-1)" },
 ];
 
 export default function KptBoard({ feedback }: { feedback: Feedback[] }) {
@@ -20,7 +20,7 @@ export default function KptBoard({ feedback }: { feedback: Feedback[] }) {
             </div>
             {items.length === 0 && <p className="kpt-empty">まだありません</p>}
             {items.map((item, i) => {
-              const meta = [item.author, item.scenarioId].filter(Boolean).join(' · ');
+              const meta = [item.author, item.scenarioId].filter(Boolean).join(" · ");
               return (
                 <div key={`${col.type}-${i}`} className="kpt-card">
                   <p className="comment">{item.comment}</p>

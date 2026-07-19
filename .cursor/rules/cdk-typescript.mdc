@@ -1,0 +1,13 @@
+---
+globs: bin/**/*.ts,lib/**/*.ts
+alwaysApply: false
+---
+
+# CDK TypeScript
+
+- TypeScript only. Do not add Python/Java/C# CDK.
+- Use AWS CDK v2 (`aws-cdk-lib`).
+- Keep the main GameDay resources in one stack (`GamedayStack`); separate concerns with constructs under `lib/constructs/`. `GameDay-Legacy` is the only intentional extra stack (different deploy lifecycle).
+- Prefer interface types (`ICluster`, etc.) for public props.
+- Construct IDs must not end with `Stack` suffix (awscdk-lint).
+- After construct changes, update Vitest tests (`pnpm test`).

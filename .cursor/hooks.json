@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/block-direct-deploy.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/remind-agent-check.sh"
+      }
+    ]
+  }
+}

@@ -14,11 +14,11 @@ gameday.json の `feedback[]` に残す**スキル。かつては `retrospective
 
 ## 3 つの視点
 
-| 視点 | 何が分かるか | 主なソース |
-|---|---|---|
-| 外形監視 (Synthetics) | ユーザーから見えた影響 | `SuccessPercent` / `Duration` メトリクス、スクリーンショット、失敗 run のログ |
-| ドリフト (cdk drift) | 実験中に人間や自動化がインフラに施した「応急処置」の痕跡 | `cdk drift` / CloudFormation ドリフト検出 |
-| メトリクス (CloudWatch) | システム内部で起きたこと | ALB `HTTPCode_ELB_5XX_Count` / `TargetResponseTime`、ECS `RunningTaskCount` / `CPUUtilization`、RDS `DatabaseConnections` |
+| 視点                    | 何が分かるか                                             | 主なソース                                                                                                                |
+| ----------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 外形監視 (Synthetics)   | ユーザーから見えた影響                                   | `SuccessPercent` / `Duration` メトリクス、スクリーンショット、失敗 run のログ                                             |
+| ドリフト (cdk drift)    | 実験中に人間や自動化がインフラに施した「応急処置」の痕跡 | `cdk drift` / CloudFormation ドリフト検出                                                                                 |
+| メトリクス (CloudWatch) | システム内部で起きたこと                                 | ALB `HTTPCode_ELB_5XX_Count` / `TargetResponseTime`、ECS `RunningTaskCount` / `CPUUtilization`、RDS `DatabaseConnections` |
 
 加えて **CDK コードの `git diff`** も素材にする — 参加者が「コンソールで直した」(→ drift に出る) のか「CDK を修正して deploy した」(→ git diff に出る) のかで、対応の質 (IaC 整合性) が分かる。
 

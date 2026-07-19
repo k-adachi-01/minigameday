@@ -9,14 +9,14 @@ export interface GamedayEvent {
 
 export type InjectStatus =
   // 手動の確定値 (運営/振り返りが記入。自動導出はこれを上書きしない)
-  | 'success'
-  | 'partial'
-  | 'failed'
-  | 'pending'
+  | "success"
+  | "partial"
+  | "failed"
+  | "pending"
   // ライブ状態 (gameEventsSync が events[] から導出する)
-  | 'armed' // 実験開始済み (aws:fis:wait 中かも。障害はいつ来るか分からない)
-  | 'impacted' // canary アラーム ALARM = 影響発生中
-  | 'recovered'; // canary アラーム OK = 復旧済み
+  | "armed" // 実験開始済み (aws:fis:wait 中かも。障害はいつ来るか分からない)
+  | "impacted" // canary アラーム ALARM = 影響発生中
+  | "recovered"; // canary アラーム OK = 復旧済み
 
 /** 段階ヒント。ポイントを消費して開示する。cost が消費点。 */
 export interface Hint {
@@ -89,7 +89,7 @@ export interface ScoringConfig {
 /** ゲームイベント (GameEvents Lambda が DynamoDB に記録 → dev サーバが同期。タイムライン素材) */
 export interface GameEvent {
   key: string; // DynamoDB の pk (重複排除キー)。ack は 'ACK#<injectId>'
-  type: 'experiment' | 'alarm' | 'ack';
+  type: "experiment" | "alarm" | "ack";
   at: string; // ISO8601 (EventBridge の time / dev サーバ時刻)
   // type: 'experiment'
   experimentId?: string;
@@ -97,7 +97,7 @@ export interface GameEvent {
   status?: string; // running | completed | stopped | failed
   // type: 'alarm'
   alarmName?: string;
-  state?: 'ALARM' | 'OK';
+  state?: "ALARM" | "OK";
   reason?: string;
   // type: 'ack'
   injectId?: string;
@@ -109,7 +109,7 @@ export interface GameEvent {
  * かつては独立した Review セクション + retrospectives/ レポートだったが、
  * 2026-07-18 に「講評も KPT 形式で同じボードへ」に一本化した。
  */
-export const AI_FEEDBACK_AUTHOR = 'AI 講評';
+export const AI_FEEDBACK_AUTHOR = "AI 講評";
 
 /** 構成図のノード (AWS リソース 1 つ分) */
 export interface SystemNode {
@@ -137,7 +137,7 @@ export interface TargetSystem {
   notes?: string[]; // 箇条書きの補足 (観測手段・ハンドアウト等)
 }
 
-export type FeedbackType = 'keep' | 'problem' | 'try';
+export type FeedbackType = "keep" | "problem" | "try";
 
 export interface Feedback {
   type: FeedbackType;

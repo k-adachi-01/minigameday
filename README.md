@@ -7,20 +7,21 @@ ALB + Fargate の Web アプリに FIS で障害を注入し、CloudWatch Synthe
 
 本体は **`GameDay` 1 スタック**。3 本柱は `lib/constructs/` 配下の Construct で分離する(cross-stack Strong Reference を避けるため。詳細は CLAUDE.md)。
 
-| スタック / Construct | 役割 |
-|---|---|
-| `GameDay` スタック | 下記 3 Construct を束ねる本体スタック |
-| └ `TargetApp` | お題の対象アプリ(3層)。ALB + Fargate(DB に ping する Node アプリ ×2)+ Aurora MySQL Serverless v2。`/healthz`=生存、`/`=DB 疎通(200/503) |
-| └ `Observability` | 振り返り。Synthetics canary(Playwright)、5xx 停止条件アラーム、ダッシュボード `gameday-review`(ALB/Target/Aurora 指標) |
-| └ `FaultInjection` | 障害注入。FIS 実験テンプレート3種(①Fargate タスク停止 / ②Aurora フェイルオーバー / ③scale-to-zero)+ 実験レポート用 S3 バケット |
-| └ `ScoreEscalation` | スコア置き場(DynamoDB)+ Streams 起動 Lambda。実効スコアが閾値到達で「次の障害」を自動発火 |
-| `GameDay-Legacy` スタック | scenario-03 用の SPOF 出発点(単一 EC2)。deploy ライフサイクルが異なるので独立。必要な回だけデプロイ |
+| スタック / Construct      | 役割                                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `GameDay` スタック        | 下記 3 Construct を束ねる本体スタック                                                                                                   |
+| └ `TargetApp`             | お題の対象アプリ(3層)。ALB + Fargate(DB に ping する Node アプリ ×2)+ Aurora MySQL Serverless v2。`/healthz`=生存、`/`=DB 疎通(200/503) |
+| └ `Observability`         | 振り返り。Synthetics canary(Playwright)、5xx 停止条件アラーム、ダッシュボード `gameday-review`(ALB/Target/Aurora 指標)                  |
+| └ `FaultInjection`        | 障害注入。FIS 実験テンプレート3種(①Fargate タスク停止 / ②Aurora フェイルオーバー / ③scale-to-zero)+ 実験レポート用 S3 バケット          |
+| └ `ScoreEscalation`       | スコア置き場(DynamoDB)+ Streams 起動 Lambda。実効スコアが閾値到達で「次の障害」を自動発火                                               |
+| `GameDay-Legacy` スタック | scenario-03 用の SPOF 出発点(単一 EC2)。deploy ライフサイクルが異なるので独立。必要な回だけデプロイ                                     |
 
 ## セットアップ
 
 ```bash
-npm install
-npx cdk bootstrap        # 初回のみ (アカウント/リージョンごと)
+nix develop            # 任意だが推奨 (Node 22 / pnpm / awscli)
+pnpm install
+pnpm exec cdk bootstrap        # 初回のみ (アカウント/リージョンごと)
 ```
 
 > アプリ層は `app/` を Docker ビルドする。ビルド自体は **`@cdklabs/deploy-time-build`** の
@@ -82,6 +83,7 @@ aws fis get-experiment --id <experiment-id>   # 状態・タイムライン
 ```
 
 **R2 の復旧は人手が要る**:
+
 - **scale-to-zero** → 参加者が desiredCount を 2 に戻す(`aws ecs update-service --cluster <名> --service <名> --desired-count 2` またはコード整合なら `cdk deploy`)。放置しても ECS は戻さない。
   ただし**運営側の保険 (backstop)** として、実験終了の 30 分後 (MTTR 採点が 0 点になる時点) に
   desiredCount がまだ 0 なら EventBridge → Step Functions が定義値へ自動復元する
@@ -272,17 +274,19 @@ npx cdk deploy GameDay \
 
 ## コスト注意
 
-Fargate / ALB / NAT Gateway は起動中ずっと課金される。GameDay が終わったら必ず `npm run destroy`。
+Fargate / ALB / NAT Gateway は起動中ずっと課金される。GameDay が終わったら必ず `pnpm destroy`。
 
 ## 開発
 
 ```bash
-npm run build      # tsc 型チェック (CDK + dashboard)
-npm run lint       # Oxlint + awscdk プラグイン (CDK の静的チェック)
-npm test           # ユニットテスト (FIS/Synthetics の要点 + dashboard の描画を守る)
-npm run synth      # 合成 (env 非固定なのでオフラインで通る)
-npm run diff       # 差分
-npm run dashboard  # GameDay ダッシュボード (React。dashboard:build で静的ビルド)
+pnpm typecheck     # tsc 型チェック (CDK + dashboard)。`pnpm build` も同義
+pnpm lint          # Oxlint + awscdk プラグイン (Vite+ / vp lint)
+pnpm format:check  # oxfmt
+pnpm test          # ユニットテスト (FIS/Synthetics の要点 + dashboard の描画を守る)
+pnpm synth         # 合成 (env 非固定なのでオフラインで通る)
+pnpm agent:check   # format + lint + typecheck + test + synth
+pnpm diff          # 差分
+pnpm dashboard     # GameDay ダッシュボード (React。dashboard:build で静的ビルド)
 ```
 
 シナリオ立案は Claude Code のサブエージェント `gameday-scenario` を使う。

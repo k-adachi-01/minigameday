@@ -1,12 +1,12 @@
-import * as path from 'node:path';
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as logs from 'aws-cdk-lib/aws-logs';
-import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as path from "node:path";
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as logs from "aws-cdk-lib/aws-logs";
+import { DynamoEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 /** スコア閾値 → 自動発火する FIS 実験の対応。id はトリガーの一意キー (冪等クレームにも使う)。 */
 export interface EscalationTrigger {
@@ -45,26 +45,26 @@ export class ScoreEscalation extends Construct {
     super(scope, id);
 
     if (props.triggers.length === 0) {
-      throw new Error('ScoreEscalation には最低 1 つの trigger が要る');
+      throw new Error("ScoreEscalation には最低 1 つの trigger が要る");
     }
 
     // スコア置き場。SCORE アイテム (現在値) と FIRED#<id> アイテム (発火済みフラグ) を持つ。
     // Streams で「SCORE の更新」を Lambda に流す。使い捨てラボなので DESTROY + オンデマンド課金。
-    const table = new dynamodb.TableV2(this, 'ScoreTable', {
-      tableName: props.tableName ?? 'gameday-score',
-      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+    const table = new dynamodb.TableV2(this, "ScoreTable", {
+      tableName: props.tableName ?? "gameday-score",
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       dynamoStream: dynamodb.StreamViewType.NEW_IMAGE,
       billing: dynamodb.Billing.onDemand(),
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
     this.table = table;
 
-    const escalator = new nodejs.NodejsFunction(this, 'Escalator', {
-      entry: path.join(__dirname, '..', '..', 'lambda', 'score-escalator', 'index.mjs'),
-      handler: 'handler',
+    const escalator = new nodejs.NodejsFunction(this, "Escalator", {
+      entry: path.join(__dirname, "..", "..", "lambda", "score-escalator", "index.mjs"),
+      handler: "handler",
       runtime: lambda.Runtime.NODEJS_24_X,
       timeout: cdk.Duration.seconds(30),
-      logGroup: new logs.LogGroup(this, 'EscalatorLogs', {
+      logGroup: new logs.LogGroup(this, "EscalatorLogs", {
         retention: logs.RetentionDays.ONE_WEEK,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       }),
@@ -100,10 +100,10 @@ export class ScoreEscalation extends Construct {
     const stack = cdk.Stack.of(this);
     escalator.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ['fis:StartExperiment', 'fis:TagResource'],
+        actions: ["fis:StartExperiment", "fis:TagResource"],
         resources: [
-          stack.formatArn({ service: 'fis', resource: 'experiment-template', resourceName: '*' }),
-          stack.formatArn({ service: 'fis', resource: 'experiment', resourceName: '*' }),
+          stack.formatArn({ service: "fis", resource: "experiment-template", resourceName: "*" }),
+          stack.formatArn({ service: "fis", resource: "experiment", resourceName: "*" }),
         ],
       }),
     );
@@ -117,16 +117,16 @@ export class ScoreEscalation extends Construct {
         retryAttempts: 2,
         filters: [
           lambda.FilterCriteria.filter({
-            eventName: ['INSERT', 'MODIFY'],
-            dynamodb: { Keys: { pk: { S: ['SCORE'] } } },
+            eventName: ["INSERT", "MODIFY"],
+            dynamodb: { Keys: { pk: { S: ["SCORE"] } } },
           }),
         ],
       }),
     );
 
-    new cdk.CfnOutput(this, 'ScoreTableName', {
+    new cdk.CfnOutput(this, "ScoreTableName", {
       value: table.tableName,
-      description: 'ダッシュボード dev サーバがスコアを put-item する DynamoDB テーブル',
+      description: "ダッシュボード dev サーバがスコアを put-item する DynamoDB テーブル",
     });
   }
 }

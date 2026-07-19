@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import Tiles from './Tiles';
-import Architecture from './Architecture';
-import AckBanner from './AckBanner';
-import ScoreTable from './ScoreTable';
-import TimeChart, { ChartLegend } from './TimeChart';
-import KptBoard from './KptBoard';
-import HintSummary from './HintSummary';
-import ReviewControl from './ReviewControl';
-import GameControl from './GameControl';
-import { effectiveScore } from './scoring';
-import { AI_FEEDBACK_AUTHOR, type GamedayData } from './types';
+import { useCallback, useEffect, useState } from "react";
+import Tiles from "./Tiles";
+import Architecture from "./Architecture";
+import AckBanner from "./AckBanner";
+import ScoreTable from "./ScoreTable";
+import TimeChart, { ChartLegend } from "./TimeChart";
+import KptBoard from "./KptBoard";
+import HintSummary from "./HintSummary";
+import ReviewControl from "./ReviewControl";
+import GameControl from "./GameControl";
+import { effectiveScore } from "./scoring";
+import { AI_FEEDBACK_AUTHOR, type GamedayData } from "./types";
 
 const POLL_MS = 3000; // gameday.json を 3 秒ごとに再取得してリアルタイム反映
-const HINTS_STORAGE_KEY = 'gameday-revealed-hints';
+const HINTS_STORAGE_KEY = "gameday-revealed-hints";
 
 function loadRevealed(): Set<string> {
   try {
@@ -38,10 +38,10 @@ export default function App() {
   // 運営が GameDay 中に JSON を編集すると数秒で画面へ反映される。
   useEffect(() => {
     let cancelled = false;
-    let lastRaw = '';
+    let lastRaw = "";
     const load = async (initial: boolean) => {
       try {
-        const res = await fetch('data/gameday.json', { cache: 'no-store' });
+        const res = await fetch("data/gameday.json", { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.text();
         if (cancelled) return;
@@ -83,9 +83,9 @@ export default function App() {
       (sum, i) => sum + (effectiveScore(i, revealedIds, data.scoring) ?? 0),
       0,
     );
-    void fetch('api/score', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    void fetch("api/score", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ total }),
     }).catch(() => {
       /* 同期は best-effort */
@@ -106,9 +106,9 @@ export default function App() {
     });
     // 2) サーバ (dev) に記録 → gameday.json の hintReveals に追記され、ポーリングで全員に共有。
     //    静的ビルドやエンドポイント不在時は失敗するが、上の楽観更新で画面は開示される。
-    void fetch('api/reveal-hint', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    void fetch("api/reveal-hint", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ injectId, hintId }),
     }).catch(() => {
       /* 記録は best-effort */
@@ -124,9 +124,9 @@ export default function App() {
       next.set(injectId, new Date().toISOString());
       return next;
     });
-    void fetch('api/ack', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    void fetch("api/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ injectId }),
     }).catch(() => {
       /* 記録は best-effort */
@@ -163,15 +163,17 @@ export default function App() {
       <header className="page-header">
         <div>
           <h1>{data.event.title}</h1>
-          <p className="event-meta">{[data.event.date, data.event.team].filter(Boolean).join(' · ')}</p>
+          <p className="event-meta">
+            {[data.event.date, data.event.team].filter(Boolean).join(" · ")}
+          </p>
         </div>
         <div className="live" aria-live="polite">
-          <span className={stale ? 'live-badge stale' : 'live-badge'}>
+          <span className={stale ? "live-badge stale" : "live-badge"}>
             <span className="live-dot" />
-            {stale ? '更新エラー' : 'LIVE'}
+            {stale ? "更新エラー" : "LIVE"}
           </span>
           <span className="live-time">
-            最終更新 {lastUpdated ? lastUpdated.toLocaleTimeString('ja-JP') : '—'}
+            最終更新 {lastUpdated ? lastUpdated.toLocaleTimeString("ja-JP") : "—"}
           </span>
         </div>
       </header>
@@ -221,7 +223,9 @@ export default function App() {
         <div className="card-head">
           <div>
             <h2>検知と復旧にかかった時間</h2>
-            <p className="card-sub">インジェクトごとの検知 (気づくまで) と復旧 (定常状態に戻るまで) の分数。</p>
+            <p className="card-sub">
+              インジェクトごとの検知 (気づくまで) と復旧 (定常状態に戻るまで) の分数。
+            </p>
           </div>
           <ChartLegend />
         </div>
@@ -237,15 +241,14 @@ export default function App() {
         <KptBoard feedback={feedback} />
         {/* AI 講評の生成 (dev サーバの /api/review → Bedrock)。再生成は AI 分だけ入れ替え */}
         {import.meta.env.DEV && (
-          <ReviewControl
-            hasAiFeedback={feedback.some((f) => f.author === AI_FEEDBACK_AUTHOR)}
-          />
+          <ReviewControl hasAiFeedback={feedback.some((f) => f.author === AI_FEEDBACK_AUTHOR)} />
         )}
       </section>
 
       <footer className="page-footer">
         <p>
-          データ: <code>dashboard/public/data/gameday.json</code> を編集すると {POLL_MS / 1000} 秒ごとに自動反映される (npm run dashboard)
+          データ: <code>dashboard/public/data/gameday.json</code> を編集すると {POLL_MS / 1000}{" "}
+          秒ごとに自動反映される (npm run dashboard)
         </p>
       </footer>
     </div>

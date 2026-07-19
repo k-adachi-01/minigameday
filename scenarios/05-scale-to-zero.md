@@ -5,7 +5,7 @@ type: rebuild
 status: executed
 fis_actions: [aws:ssm:start-automation-execution]
 prerequisites: [ssm-automation-doc, fis-ssm-role]
-estimated_duration: 40m   # 実験は数秒。検知 + 復旧ワーク (desiredCount を戻す) + 前後観測
+estimated_duration: 40m # 実験は数秒。検知 + 復旧ワーク (desiredCount を戻す) + 前後観測
 difficulty: intermediate
 round: 2
 ---

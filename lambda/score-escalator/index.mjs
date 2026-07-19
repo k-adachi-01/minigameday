@@ -19,29 +19,29 @@
 // バンドル: aws-cdk-lib/aws-lambda-nodejs (esbuild) が @aws-sdk/* を同梱する
 //   (ランタイム同梱 SDK に client-fis がある保証がないため、AWS 推奨どおり明示バンドル)。
 
-import { DynamoDBClient, PutItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
-import { FisClient, StartExperimentCommand } from '@aws-sdk/client-fis';
+import { DynamoDBClient, PutItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
+import { FisClient, StartExperimentCommand } from "@aws-sdk/client-fis";
 
 const ddb = new DynamoDBClient({});
 const fis = new FisClient({});
 
 const TABLE_NAME = process.env.TABLE_NAME;
 /** [{ id, atScore, experimentTemplateId, label }] — CDK が環境変数で注入 */
-const TRIGGERS = JSON.parse(process.env.TRIGGERS ?? '[]');
+const TRIGGERS = JSON.parse(process.env.TRIGGERS ?? "[]");
 
 export const handler = async (event) => {
   const fired = [];
   for (const record of event.Records ?? []) {
-    if (record.eventName !== 'INSERT' && record.eventName !== 'MODIFY') continue;
+    if (record.eventName !== "INSERT" && record.eventName !== "MODIFY") continue;
     const image = record.dynamodb?.NewImage;
-    if (!image || image.pk?.S !== 'SCORE') continue;
+    if (!image || image.pk?.S !== "SCORE") continue;
 
     const total = Number(image.total?.N);
     if (!Number.isFinite(total)) continue;
 
     // 運営による一時停止 (gameday.json の escalation.enabled=false → dev サーバが写す)
     if (image.escalationEnabled?.BOOL === false) {
-      console.log(JSON.stringify({ msg: 'escalation disabled, skipping', total }));
+      console.log(JSON.stringify({ msg: "escalation disabled, skipping", total }));
       continue;
     }
 
@@ -61,11 +61,11 @@ export const handler = async (event) => {
               totalAtFire: { N: String(total) },
               experimentTemplateId: { S: trigger.experimentTemplateId },
             },
-            ConditionExpression: 'attribute_not_exists(pk)',
+            ConditionExpression: "attribute_not_exists(pk)",
           }),
         );
       } catch (err) {
-        if (err?.name === 'ConditionalCheckFailedException') continue; // 発火済み
+        if (err?.name === "ConditionalCheckFailedException") continue; // 発火済み
         throw err;
       }
 
@@ -77,7 +77,7 @@ export const handler = async (event) => {
         res = await fis.send(
           new StartExperimentCommand({
             experimentTemplateId: trigger.experimentTemplateId,
-            tags: { Name: `gameday-escalation-${trigger.id}`, TriggeredBy: 'score-escalator' },
+            tags: { Name: `gameday-escalation-${trigger.id}`, TriggeredBy: "score-escalator" },
           }),
         );
       } catch (err) {
@@ -86,14 +86,14 @@ export const handler = async (event) => {
             new DeleteItemCommand({
               TableName: TABLE_NAME,
               Key: { pk: { S: `FIRED#${trigger.id}` } },
-              ConditionExpression: 'firedAt = :firedAt',
-              ExpressionAttributeValues: { ':firedAt': { S: firedAt } },
+              ConditionExpression: "firedAt = :firedAt",
+              ExpressionAttributeValues: { ":firedAt": { S: firedAt } },
             }),
           );
         } catch (rollbackErr) {
           // 返却失敗 (他クレームに置き換わった等) は握りつぶし、元エラーを優先して投げる
-          if (rollbackErr?.name !== 'ConditionalCheckFailedException') {
-            console.error(JSON.stringify({ msg: 'claim rollback failed', trigger: trigger.id }));
+          if (rollbackErr?.name !== "ConditionalCheckFailedException") {
+            console.error(JSON.stringify({ msg: "claim rollback failed", trigger: trigger.id }));
           }
         }
         throw err;
@@ -102,7 +102,7 @@ export const handler = async (event) => {
       fired.push({ trigger: trigger.id, atScore: trigger.atScore, total, experimentId });
       console.log(
         JSON.stringify({
-          msg: 'escalation fired',
+          msg: "escalation fired",
           trigger: trigger.id,
           label: trigger.label,
           atScore: trigger.atScore,

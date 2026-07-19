@@ -1,4 +1,4 @@
-import type { Inject } from './types';
+import type { Inject } from "./types";
 
 /**
  * インジェクトごとの段階ヒント。ロックされたヒントをクリックすると
@@ -24,7 +24,7 @@ export default function Hints({
         {hints.map((h) => {
           const open = revealed.has(h.id);
           return (
-            <li key={h.id} className={open ? 'hint open' : 'hint'}>
+            <li key={h.id} className={open ? "hint open" : "hint"}>
               {open ? (
                 <div className="hint-body">
                   <div className="hint-line">
@@ -34,7 +34,11 @@ export default function Hints({
                   <p className="hint-text">{h.text}</p>
                 </div>
               ) : (
-                <button type="button" className="hint-reveal" onClick={() => onReveal(inject.id, h.id)}>
+                <button
+                  type="button"
+                  className="hint-reveal"
+                  onClick={() => onReveal(inject.id, h.id)}
+                >
                   <span className="hint-lock">🔒</span>
                   {`${h.label} を見る`}
                   <span className="hint-cost">{`（−${h.cost}pt）`}</span>

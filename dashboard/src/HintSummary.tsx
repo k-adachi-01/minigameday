@@ -1,4 +1,4 @@
-import type { HintReveal, Inject } from './types';
+import type { HintReveal, Inject } from "./types";
 
 /**
  * ヒント消費サマリ。gameday.json の hintReveals (サーバ記録) を集計して
@@ -26,7 +26,7 @@ export default function HintSummary({
 
   const fmtTime = (iso: string) => {
     const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? iso : d.toLocaleTimeString('ja-JP');
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleTimeString("ja-JP");
   };
 
   return (
@@ -35,7 +35,8 @@ export default function HintSummary({
         <div>
           <h2>ヒント消費サマリ</h2>
           <p className="card-sub">
-            開示されたヒントの記録 (gameday.json の hintReveals)。消費が多いほど詰まった目安 = 振り返りの素材。
+            開示されたヒントの記録 (gameday.json の hintReveals)。消費が多いほど詰まった目安 =
+            振り返りの素材。
           </p>
         </div>
         <div className="hint-total">

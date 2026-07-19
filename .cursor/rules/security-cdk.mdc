@@ -1,0 +1,12 @@
+---
+description: CDK security review guidance for IAM, S3, KMS, RemovalPolicy, and public access
+alwaysApply: false
+---
+
+# CDK security
+
+- Block public S3 access; enable encryption where practical.
+- Avoid broad IAM `Action: "*"` unless justified and scoped.
+- Document RemovalPolicy; GameDay lab stacks often use DESTROY intentionally.
+- Intentional cdk-nag suppressions live in `lib/nag-suppressions.ts` with reasons.
+- Use the `cdk-security-review` skill for structured review.

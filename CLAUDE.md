@@ -25,15 +25,15 @@ CFP 登壇用。3年前の「AWS CDK × AWS FIS でミニ GameDay をつくろ�
 
 ## 3 本柱とスキル・エージェントの対応
 
-| 柱 | 使うもの | 役割 |
-|---|---|---|
-| 1. シナリオ立案 | `add-scenario` スキル + `gameday-scenario` エージェント | 追加手順・観測可能性チェック (スキル) と設計本体 (エージェント)。`scenarios/NN-<slug>.md` に保存 |
-| 2. 障害実装 | `fis-experiment` スキル | シナリオを `lib/constructs/fault-injection.ts` の FIS 実験テンプレートに実装。安全装置チェックリスト付き |
-| 3. 振り返り | `gameday-retrospective` スキル | 実験前ベースライン → 観測 → 3 視点分析 (canary / drift / メトリクス) → KPT 講評を gameday.json の feedback[] へ (レポートファイルは作らない) |
-| (当日運営) | `gameday-dashboard` スキル | スコア表・KPT フィードバックのダッシュボードサイト (`dashboard/`) の運用。`gameday.json` 編集で即時反映 |
-| (テスト) | `aws-cdk-unit-testing` スキル (外部プラグイン) | CDK テストの書き方の判断基準 |
+| 柱              | 使うもの                                                | 役割                                                                                                                                         |
+| --------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. シナリオ立案 | `add-scenario` スキル + `gameday-scenario` エージェント | 追加手順・観測可能性チェック (スキル) と設計本体 (エージェント)。`scenarios/NN-<slug>.md` に保存                                             |
+| 2. 障害実装     | `fis-experiment` スキル                                 | シナリオを `lib/constructs/fault-injection.ts` の FIS 実験テンプレートに実装。安全装置チェックリスト付き                                     |
+| 3. 振り返り     | `gameday-retrospective` スキル                          | 実験前ベースライン → 観測 → 3 視点分析 (canary / drift / メトリクス) → KPT 講評を gameday.json の feedback[] へ (レポートファイルは作らない) |
+| (当日運営)      | `gameday-dashboard` スキル                              | スコア表・KPT フィードバックのダッシュボードサイト (`dashboard/`) の運用。`gameday.json` 編集で即時反映                                      |
+| (テスト)        | `cdk-unit-test` スキル                                  | CDK テストの書き方の判断基準                                                                                                                 |
 
-シナリオは frontmatter (`id` / `status: draft→implemented→executed` / `fis_actions` / `prerequisites`) 付き markdown。フォーマットの詳細はエージェント定義 (`.claude/agents/gameday-scenario.md`) にある。
+シナリオは frontmatter (`id` / `status: draft→implemented→executed` / `fis_actions` / `prerequisites`) 付き markdown。フォーマットの詳細はエージェント定義 (`.cursor/agents/gameday-scenario.md`、Skills SSOT は `.agents/skills`) にある。
 
 ### シナリオ生成・実装時の制約(ハルシネーション対策 + 安全)
 
@@ -45,9 +45,9 @@ AI に FIS 実験を書かせるときの必須制約。詳細と実装例は `f
   - **ephemeral な対象**(ECS タスク等、ARN が実行時にしか決まらない)→ `resourceTags` + `selectionMode` (`COUNT`/`PERCENT`)。同じタグが他リソースに付いていないか確認する。
   - **deploy 時に ARN が確定する安定リソース**(同一スタックの Aurora クラスタ等)→ CDK 参照経由の `resourceArns` で名指しする方が正確(タグの取り違えが起きず、単一リソースに確実に絞れる)。`FaultInjection` の Aurora フェイルオーバーがこのパターン。「タグで縛る」の唯一解ではなく、"deploy 時に確定するなら ARN、実行時に決まるならタグ" が原則。
 - **`logConfiguration` (CloudWatch Logs) と `experimentReportConfiguration` を設定**する(振り返りの素材)。
-- **アクション仕様は記憶で書かない**。`.claude/skills/fis-experiment/references/fis-actions.md`(検証済みメモ)を読み、無ければ AWS Knowledge MCP / `aws fis list-actions` で確認する。
+- **アクション仕様は記憶で書かない**。`.agents/skills/fis-experiment/references/fis-actions.md`(検証済みメモ)を読み、無ければ AWS Knowledge MCP / `aws fis list-actions` で確認する。
 - **生成物の置き場所**: シナリオ = `scenarios/NN-<slug>.md`(markdown)、実装コード = `lib/constructs/fault-injection.ts`。
-- **生成後の検証ループ**: `npm run build`(型)→ `npm test`(fine-grained/スナップショット)→ `npm run synth:nag`(cdk-nag)を通してからデプロイ。「AI に書かせて検証する」を必ず一巡させる。
+- **生成後の検証ループ**: `pnpm typecheck`(型)→ `pnpm test`(fine-grained/スナップショット)→ `pnpm synth:nag`(cdk-nag)を通してからデプロイ。「AI に書かせて検証する」を必ず一巡させる。完了前は `pnpm agent:check`。
 
 ## ディレクトリ構成
 
@@ -70,18 +70,24 @@ scenarios/      AI が生成した GameDay シナリオ (markdown, frontmatter �
 dashboard/      スコア表・振り返りダッシュボード (React + TypeScript。データは public/data/gameday.json)
   review-generator.ts  AI 講評生成 (dev サーバ専用。KPT 形式で feedback[] へ書き込む)
   data-archive/        npm run reset が旧 gameday.json を退避する先 (自動)
-scripts/        運用スクリプト (reset-gameday.ts = 周回リセット)
+scripts/        運用スクリプト (reset-gameday.ts = 周回リセット、ensure-symlinks.ts)
 canaries/       Synthetics Playwright スクリプト
 test/           CDK ユニットテスト
-.claude/
+.agents/
+  skills/       Skills SSOT (GameDay + CDK / sandbox)
+.cursor/
   agents/       gameday-scenario エージェント
-  skills/       add-scenario / fis-experiment / gameday-dashboard / gameday-retrospective スキル
+  skills/       -> .agents/skills への symlink
+  rules/        Cursor project rules
+.claude/
+  agents/       gameday-scenario -> .cursor/agents への symlink
+  skills/       -> .agents/skills への symlink
 ```
 
 ## 規約・進め方
 
 - AWS の最新仕様 (CDK / FIS / Synthetics の新機能) は **AWS Knowledge MCP** または公式ドキュメントで確認してから実装する。記憶に頼らない。FIS・Synthetics は機能追加が速い。
-- CDK のテストは `aws-cdk-unit-testing` スキルの判断基準に従う(スナップショット / fine-grained / バリデーションの使い分け)。ただしスキルのコード例は Jest 前提なので、このプロジェクトでは Vitest に読み替える(`expect` API はほぼ互換。`import { test, expect } from 'vitest'` を付ける)。
+- CDK のテストは `cdk-unit-test` スキルの判断基準に従う(スナップショット / fine-grained / バリデーションの使い分け)。ただし公式例は Jest 前提なので、このプロジェクトでは Vitest (Vite+) に読み替える(`expect` API はほぼ互換。`import { test, expect } from 'vitest'` を付ける)。
 - コードを書いたら `npm run lint` (Oxlint + awscdk プラグイン) を通す。公開プロパティ・Props はコンストラクト具象型でなくインターフェース型 (`ICluster` 等) で公開する。
 - **スタックは分割しない。** 本体は `GamedayStack` 1 つで、関心分離は `lib/constructs/` 配下の Construct 分割で行う (cross-stack Strong Reference を避ける。`aws-cdk-development` スキル鉄則1・2)。deploy ライフサイクルが異なる `GameDay-Legacy` (scenario-03) だけが例外。
 - `app/` (対象アプリ) と `canaries/` (canary スクリプト) は**意図的に素の JS のまま**にする (TS 化しない)。実行環境が JS を直接実行し「デプロイ物 = ソース」であることが振り返り・デモで価値になるため (特に Synthetics コンソールはスクリプトをそのまま表示する)。
@@ -95,7 +101,7 @@ test/           CDK ユニットテスト
 - **Synthetics Playwright ランタイム**: 最新は `syn-nodejs-playwright-7.1` (Node.js 22 / Playwright 1.59)。5.1 以降は namespace が `@aws/synthetics-playwright`(旧 `@amzn/...` は非推奨)。型定義は npm にあり、ランタイムとバージョンを合わせる。
 - **CDK の Playwright ランタイム定数**: `synthetics.Runtime.SYNTHETICS_NODEJS_PLAYWRIGHT_*`(aws-cdk-lib 2.258.1 では `6_0` が最新定数)。現在このプロジェクトは 6.0 を使用。定数未提供の新ランタイムは `new synthetics.Runtime('syn-nodejs-playwright-7.1', synthetics.RuntimeFamily.NODEJS)` で指定できる。
 - **Vite+ / Oxlint の前提**: ツールチェーンは Node.js >= 22 が必要 (この環境は Node 24.18 / npm 11)。Node が古いと npm が optional 依存のネイティブバイナリを**黙ってスキップ**し「Cannot find native binding」で落ちる。corsa-oxlint (型認識リント) は Windows で JS シムを spawn する不具合があり、`vite.config.ts` の `settings.corsaOxlint.corsa.executable` で `tsgo.exe` を明示している。
-- **FIS は L1 のみ**: `aws-cdk-lib/aws-fis` は `CfnExperimentTemplate` だけ。L2 を探さない。アクション仕様の検証メモは `.claude/skills/fis-experiment/references/fis-actions.md`。
+- **FIS は L1 のみ**: `aws-cdk-lib/aws-fis` は `CfnExperimentTemplate` だけ。L2 を探さない。アクション仕様の検証メモは `.agents/skills/fis-experiment/references/fis-actions.md`。
 - **NodejsFunction のバンドルは CJS 出力にする (2026-07-17 実機で確認)**: `format: ESM` + `externalModules: []` で CJS の AWS SDK を同梱すると Lambda が `Dynamic require of "node:https" is not supported` で Init クラッシュする。定石の createRequire banner は **Windows のローカルバンドルでシェルにダブルクォートを剥がされて SyntaxError** になるため使えない。`OutputFormat.CJS` なら両問題が消える (.mjs ソースのままで可。トップレベル await を使う場合のみ再考)。
 - **tags 付き `fis:StartExperiment` には `fis:TagResource` も要る (2026-07-17 実機で確認)**: 開始時タグは新規実験へのタグ付けとして別権限が要求され、無いと AccessDenied。ユニットテストでは捕まらない — 「AI に書かせて実機で一巡」の検証ループを省略しない。
 - **FIS でネイティブアクションが無い操作は `aws:ssm:start-automation-execution`**: FIS には ECS の desiredCount 変更や SG ルール削除のネイティブアクションが無い。SSM Automation ドキュメント (`aws:executeAwsApi` ステップ) を FIS から起動する。パラメータ = `documentArn` / `documentParameters` (JSON 文字列) / `maxDuration` (PT1M〜PT12H)。FIS ロール権限 = `ssm:StartAutomationExecution`/`GetAutomationExecution`/`StopAutomationExecution` + `iam:PassRole` (automation ロール)。`documentParameters` にトークン (ARN/名前) を入れるときは `JSON.stringify` ではなく `stack.toJsonString(...)` を使う (トークンを Fn::Join で解決)。scale-to-zero (scenario-05) がこのパターン。

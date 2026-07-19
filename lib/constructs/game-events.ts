@@ -1,14 +1,14 @@
-import * as path from 'node:path';
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as logs from 'aws-cdk-lib/aws-logs';
-import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as path from "node:path";
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 
 export interface GameEventsProps {
   /** 影響開始 (ALARM) / 復旧 (OK) の判定に使う canary ヘルスアラーム */
@@ -37,26 +37,26 @@ export class GameEvents extends Construct {
     super(scope, id);
 
     if (props.experimentTemplateIds.length === 0) {
-      throw new Error('GameEvents には最低 1 つの experimentTemplateId が要る');
+      throw new Error("GameEvents には最低 1 つの experimentTemplateId が要る");
     }
 
     // 記録の取りこぼしの受け皿。EventBridge → Lambda は非同期呼び出しで、ハンドラが
     // 失敗し続けると既定 2 回のリトライ後にイベントが黙って消える (= 採点素材の欠落)。
     // DLQ に残せば「いつ何を取り逃したか」を後から確認し、手書きフォールバック
     // (experimentStartedAt 等) で補える。
-    const dlq = new sqs.Queue(this, 'RecorderDlq', {
+    const dlq = new sqs.Queue(this, "RecorderDlq", {
       enforceSSL: true,
       encryption: sqs.QueueEncryption.SQS_MANAGED,
       retentionPeriod: cdk.Duration.days(14),
     });
 
-    const recorder = new nodejs.NodejsFunction(this, 'Recorder', {
-      entry: path.join(__dirname, '..', '..', 'lambda', 'game-events', 'index.mjs'),
-      handler: 'handler',
+    const recorder = new nodejs.NodejsFunction(this, "Recorder", {
+      entry: path.join(__dirname, "..", "..", "lambda", "game-events", "index.mjs"),
+      handler: "handler",
       runtime: lambda.Runtime.NODEJS_24_X,
       timeout: cdk.Duration.seconds(10),
       deadLetterQueue: dlq,
-      logGroup: new logs.LogGroup(this, 'RecorderLogs', {
+      logGroup: new logs.LogGroup(this, "RecorderLogs", {
         retention: logs.RetentionDays.ONE_WEEK,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       }),
@@ -77,27 +77,27 @@ export class GameEvents extends Construct {
     props.table.grants.writeData(recorder);
 
     // canary ヘルスアラームの状態遷移。INSUFFICIENT_DATA (起動直後) は採点に無関係なので捨てる
-    new events.Rule(this, 'AlarmStateRule', {
-      description: 'GameDay: canary ヘルスアラームの ALARM/OK 遷移を記録する',
+    new events.Rule(this, "AlarmStateRule", {
+      description: "GameDay: canary ヘルスアラームの ALARM/OK 遷移を記録する",
       eventPattern: {
-        source: ['aws.cloudwatch'],
-        detailType: ['CloudWatch Alarm State Change'],
+        source: ["aws.cloudwatch"],
+        detailType: ["CloudWatch Alarm State Change"],
         resources: [props.healthAlarm.alarmArn],
-        detail: { state: { value: ['ALARM', 'OK'] } },
+        detail: { state: { value: ["ALARM", "OK"] } },
       },
       targets: [new targets.LambdaFunction(recorder)],
     });
 
     // GameDay の実験テンプレートに限った FIS 実験の状態遷移。
     // running = 実験開始 (aws:fis:wait 中は障害はまだ = ダッシュボードでは「armed」表示)
-    new events.Rule(this, 'FisStateRule', {
-      description: 'GameDay: FIS 実験の状態遷移 (running/completed/stopped/failed) を記録する',
+    new events.Rule(this, "FisStateRule", {
+      description: "GameDay: FIS 実験の状態遷移 (running/completed/stopped/failed) を記録する",
       eventPattern: {
-        source: ['aws.fis'],
-        detailType: ['FIS Experiment State Change'],
+        source: ["aws.fis"],
+        detailType: ["FIS Experiment State Change"],
         detail: {
-          'experiment-template-id': props.experimentTemplateIds,
-          'new-state': { status: ['running', 'completed', 'stopped', 'failed'] },
+          "experiment-template-id": props.experimentTemplateIds,
+          "new-state": { status: ["running", "completed", "stopped", "failed"] },
         },
       },
       targets: [new targets.LambdaFunction(recorder)],

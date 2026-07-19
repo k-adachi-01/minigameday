@@ -1,10 +1,10 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
-import * as cloudwatchActions from 'aws-cdk-lib/aws-cloudwatch-actions';
-import * as sns from 'aws-cdk-lib/aws-sns';
-import * as synthetics from 'aws-cdk-lib/aws-synthetics';
-import * as chatbot from 'aws-cdk-lib/aws-chatbot';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as cloudwatchActions from "aws-cdk-lib/aws-cloudwatch-actions";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as synthetics from "aws-cdk-lib/aws-synthetics";
+import * as chatbot from "aws-cdk-lib/aws-chatbot";
 
 export interface SlackNotifyProps {
   /** ヘルス判定に使う canary (成功率が下がったら障害) */
@@ -38,24 +38,24 @@ export class SlackNotify extends Construct {
   constructor(scope: Construct, id: string, props: SlackNotifyProps) {
     super(scope, id);
 
-    const topic = new sns.Topic(this, 'IncidentTopic', {
-      topicName: 'gameday-incidents',
-      displayName: 'GameDay incidents',
+    const topic = new sns.Topic(this, "IncidentTopic", {
+      topicName: "gameday-incidents",
+      displayName: "GameDay incidents",
     });
 
     // canary 成功率 (1 分粒度)。1 回でも失敗すると Average < 100 になる。
     const successPercent = new cloudwatch.Metric({
-      namespace: 'CloudWatchSynthetics',
-      metricName: 'SuccessPercent',
+      namespace: "CloudWatchSynthetics",
+      metricName: "SuccessPercent",
       dimensionsMap: { CanaryName: props.canary.canaryName },
-      statistic: 'Average',
+      statistic: "Average",
       period: cdk.Duration.minutes(1),
     });
 
-    const healthAlarm = new cloudwatch.Alarm(this, 'CanaryHealth', {
-      alarmName: 'gameday-canary-health',
+    const healthAlarm = new cloudwatch.Alarm(this, "CanaryHealth", {
+      alarmName: "gameday-canary-health",
       alarmDescription:
-        'GameDay: canary 成功率が 100% を下回ったら障害発生、100% に戻ったら復旧。Slack 通知に使う。',
+        "GameDay: canary 成功率が 100% を下回ったら障害発生、100% に戻ったら復旧。Slack 通知に使う。",
       metric: successPercent,
       threshold: 100,
       comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
@@ -75,15 +75,15 @@ export class SlackNotify extends Construct {
     // OK のままになり、誰も監視が死んだことに気づけない。SampleCount (5 分間の実行回数) を
     // 見張り、0 なら BREACHING で運営に知らせる。ゲームの採点イベントには使わない
     // (GameEvents が拾うのは healthAlarm だけ)。
-    const heartbeatAlarm = new cloudwatch.Alarm(this, 'CanaryHeartbeat', {
-      alarmName: 'gameday-canary-heartbeat',
+    const heartbeatAlarm = new cloudwatch.Alarm(this, "CanaryHeartbeat", {
+      alarmName: "gameday-canary-heartbeat",
       alarmDescription:
-        'GameDay: canary が 5 分間 1 回も実行されていない (監視の空白)。canary の状態を確認する。',
+        "GameDay: canary が 5 分間 1 回も実行されていない (監視の空白)。canary の状態を確認する。",
       metric: new cloudwatch.Metric({
-        namespace: 'CloudWatchSynthetics',
-        metricName: 'SuccessPercent',
+        namespace: "CloudWatchSynthetics",
+        metricName: "SuccessPercent",
         dimensionsMap: { CanaryName: props.canary.canaryName },
-        statistic: 'SampleCount',
+        statistic: "SampleCount",
         period: cdk.Duration.minutes(5),
       }),
       threshold: 1,
@@ -96,22 +96,23 @@ export class SlackNotify extends Construct {
     heartbeatAlarm.addOkAction(snsAction); // 監視復帰 → Slack
 
     if (props.slackWorkspaceId && props.slackChannelId) {
-      new chatbot.SlackChannelConfiguration(this, 'Slack', {
-        slackChannelConfigurationName: 'gameday-incidents',
+      new chatbot.SlackChannelConfiguration(this, "Slack", {
+        slackChannelConfigurationName: "gameday-incidents",
         slackWorkspaceId: props.slackWorkspaceId,
         slackChannelId: props.slackChannelId,
         notificationTopics: [topic],
       });
     } else {
-      new cdk.CfnOutput(this, 'SlackNote', {
-        value: 'Slack 未設定 (SNS のみ)。認可後に -c slackWorkspaceId=... -c slackChannelId=... で有効化',
-        description: 'Slack 通知の状態',
+      new cdk.CfnOutput(this, "SlackNote", {
+        value:
+          "Slack 未設定 (SNS のみ)。認可後に -c slackWorkspaceId=... -c slackChannelId=... で有効化",
+        description: "Slack 通知の状態",
       });
     }
 
-    new cdk.CfnOutput(this, 'IncidentTopicArn', {
+    new cdk.CfnOutput(this, "IncidentTopicArn", {
       value: topic.topicArn,
-      description: 'GameDay 障害/復旧通知の SNS トピック',
+      description: "GameDay 障害/復旧通知の SNS トピック",
     });
   }
 }

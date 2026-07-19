@@ -1,12 +1,12 @@
-import { test, expect } from 'vitest';
-import * as cdk from 'aws-cdk-lib';
-import { Template, Match } from 'aws-cdk-lib/assertions';
-import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
-import * as rds from 'aws-cdk-lib/aws-rds';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
-import { GamedayStack } from '../lib/gameday-stack';
-import { FaultInjection } from '../lib/constructs/fault-injection';
-import { ScoreEscalation } from '../lib/constructs/score-escalation';
+import { test, expect } from "vitest";
+import * as cdk from "aws-cdk-lib";
+import { Template, Match } from "aws-cdk-lib/assertions";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as rds from "aws-cdk-lib/aws-rds";
+import * as ecs from "aws-cdk-lib/aws-ecs";
+import { GamedayStack } from "../lib/gameday-stack";
+import { FaultInjection } from "../lib/constructs/fault-injection";
+import { ScoreEscalation } from "../lib/constructs/score-escalation";
 
 /**
  * Fine-grained assertions。
@@ -20,30 +20,30 @@ let defaultTemplate: Template | undefined;
 function buildTemplate(): Template {
   if (!defaultTemplate) {
     const app = new cdk.App();
-    const stack = new GamedayStack(app, 'GameDay');
+    const stack = new GamedayStack(app, "GameDay");
     defaultTemplate = Template.fromStack(stack);
   }
   return defaultTemplate;
 }
 
-test('対象アプリ: インターネット向け ALB の背後で Fargate が 2 タスク動く', () => {
+test("対象アプリ: インターネット向け ALB の背後で Fargate が 2 タスク動く", () => {
   const t = buildTemplate();
 
-  t.hasResourceProperties('AWS::ECS::Service', { DesiredCount: 2 });
-  t.hasResourceProperties('AWS::ElasticLoadBalancingV2::LoadBalancer', {
-    Scheme: 'internet-facing',
+  t.hasResourceProperties("AWS::ECS::Service", { DesiredCount: 2 });
+  t.hasResourceProperties("AWS::ElasticLoadBalancingV2::LoadBalancer", {
+    Scheme: "internet-facing",
   });
   // ALB ヘルスチェックは DB 非依存の /healthz (canary が叩く "/" とは分離)
-  t.hasResourceProperties('AWS::ElasticLoadBalancingV2::TargetGroup', {
-    HealthCheckPath: '/healthz',
+  t.hasResourceProperties("AWS::ElasticLoadBalancingV2::TargetGroup", {
+    HealthCheckPath: "/healthz",
   });
 });
 
-test('データ層: Aurora MySQL Serverless v2 が作られる', () => {
+test("データ層: Aurora MySQL Serverless v2 が作られる", () => {
   const t = buildTemplate();
 
-  t.hasResourceProperties('AWS::RDS::DBCluster', {
-    Engine: 'aurora-mysql',
+  t.hasResourceProperties("AWS::RDS::DBCluster", {
+    Engine: "aurora-mysql",
     ServerlessV2ScalingConfiguration: Match.objectLike({
       MinCapacity: 0.5,
       MaxCapacity: 1,
@@ -51,87 +51,85 @@ test('データ層: Aurora MySQL Serverless v2 が作られる', () => {
   });
 });
 
-test('振り返り: canary は Playwright ランタイムを使う。アラームは停止条件+ヘルス+ハートビートの 3 つ', () => {
+test("振り返り: canary は Playwright ランタイムを使う。アラームは停止条件+ヘルス+ハートビートの 3 つ", () => {
   const t = buildTemplate();
 
-  t.hasResourceProperties('AWS::Synthetics::Canary', {
-    RuntimeVersion: 'syn-nodejs-playwright-6.0',
+  t.hasResourceProperties("AWS::Synthetics::Canary", {
+    RuntimeVersion: "syn-nodejs-playwright-6.0",
   });
   // 停止条件 (5xx) + Slack 通知用ヘルス (canary 成功率) + 監視の空白検知 (ハートビート)
-  t.resourceCountIs('AWS::CloudWatch::Alarm', 3);
+  t.resourceCountIs("AWS::CloudWatch::Alarm", 3);
 });
 
-test('監視の空白: canary が動いていないこと自体を検知するハートビートアラームがある', () => {
+test("監視の空白: canary が動いていないこと自体を検知するハートビートアラームがある", () => {
   const t = buildTemplate();
 
   // healthAlarm は欠測 = OK (NOT_BREACHING) なので、canary 停止は別アラームで拾う。
   // SampleCount (5 分間の実行回数) < 1、欠測 = BREACHING = まさに検知したい状態
-  const topicRef = Match.arrayWith([{ Ref: Match.stringLikeRegexp('SlackNotifyIncidentTopic') }]);
-  t.hasResourceProperties('AWS::CloudWatch::Alarm', {
-    AlarmName: 'gameday-canary-heartbeat',
-    Statistic: 'SampleCount',
+  const topicRef = Match.arrayWith([{ Ref: Match.stringLikeRegexp("SlackNotifyIncidentTopic") }]);
+  t.hasResourceProperties("AWS::CloudWatch::Alarm", {
+    AlarmName: "gameday-canary-heartbeat",
+    Statistic: "SampleCount",
     Period: 300,
     Threshold: 1,
-    ComparisonOperator: 'LessThanThreshold',
-    TreatMissingData: 'breaching',
+    ComparisonOperator: "LessThanThreshold",
+    TreatMissingData: "breaching",
     AlarmActions: topicRef,
     OKActions: topicRef,
   });
 });
 
-test('Slack 通知: canary ヘルスアラームが ALARM/OK 両方を SNS に流す', () => {
+test("Slack 通知: canary ヘルスアラームが ALARM/OK 両方を SNS に流す", () => {
   const t = buildTemplate();
 
   // canary 成功率 < 100 で発火するヘルスアラーム。ALARM/OK 両方が同じ SNS トピックを参照
-  const topicRef = Match.arrayWith([{ Ref: Match.stringLikeRegexp('SlackNotifyIncidentTopic') }]);
-  t.hasResourceProperties('AWS::CloudWatch::Alarm', {
-    AlarmName: 'gameday-canary-health',
-    ComparisonOperator: 'LessThanThreshold',
+  const topicRef = Match.arrayWith([{ Ref: Match.stringLikeRegexp("SlackNotifyIncidentTopic") }]);
+  t.hasResourceProperties("AWS::CloudWatch::Alarm", {
+    AlarmName: "gameday-canary-health",
+    ComparisonOperator: "LessThanThreshold",
     Threshold: 100,
     AlarmActions: topicRef,
     OKActions: topicRef,
   });
-  t.resourceCountIs('AWS::SNS::Topic', 1);
+  t.resourceCountIs("AWS::SNS::Topic", 1);
   // context 未指定なので Chatbot は作られない (他環境でも deploy 可)
-  t.resourceCountIs('AWS::Chatbot::SlackChannelConfiguration', 0);
+  t.resourceCountIs("AWS::Chatbot::SlackChannelConfiguration", 0);
 });
 
-test('Slack 通知: context で workspace/channel を渡すと Chatbot が作られる', () => {
+test("Slack 通知: context で workspace/channel を渡すと Chatbot が作られる", () => {
   const app = new cdk.App({
-    context: { slackWorkspaceId: 'T0BA0DS8UH4', slackChannelId: 'C0BGHTVG5FV' },
+    context: { slackWorkspaceId: "T0BA0DS8UH4", slackChannelId: "C0BGHTVG5FV" },
   });
-  const t = Template.fromStack(new GamedayStack(app, 'GameDaySlack'));
-  t.hasResourceProperties('AWS::Chatbot::SlackChannelConfiguration', {
-    SlackWorkspaceId: 'T0BA0DS8UH4',
-    SlackChannelId: 'C0BGHTVG5FV',
+  const t = Template.fromStack(new GamedayStack(app, "GameDaySlack"));
+  t.hasResourceProperties("AWS::Chatbot::SlackChannelConfiguration", {
+    SlackWorkspaceId: "T0BA0DS8UH4",
+    SlackChannelId: "C0BGHTVG5FV",
   });
 });
 
-test('障害注入1: FIS は ECS タスクを 1 つ停止し、停止条件にアラームを使う', () => {
+test("障害注入1: FIS は ECS タスクを 1 つ停止し、停止条件にアラームを使う", () => {
   const t = buildTemplate();
 
-  t.hasResourceProperties('AWS::FIS::ExperimentTemplate', {
+  t.hasResourceProperties("AWS::FIS::ExperimentTemplate", {
     Actions: Match.objectLike({
-      StopTask: Match.objectLike({ ActionId: 'aws:ecs:stop-task' }),
+      StopTask: Match.objectLike({ ActionId: "aws:ecs:stop-task" }),
     }),
     Targets: Match.objectLike({
       Tasks: Match.objectLike({
-        ResourceType: 'aws:ecs:task',
-        SelectionMode: 'COUNT(1)',
+        ResourceType: "aws:ecs:task",
+        SelectionMode: "COUNT(1)",
       }),
     }),
-    StopConditions: Match.arrayWith([
-      Match.objectLike({ Source: 'aws:cloudwatch:alarm' }),
-    ]),
+    StopConditions: Match.arrayWith([Match.objectLike({ Source: "aws:cloudwatch:alarm" })]),
   });
 });
 
-test('障害注入: 全実験は CloudWatch Logs へ実験ログを残す (振り返りの素材)', () => {
+test("障害注入: 全実験は CloudWatch Logs へ実験ログを残す (振り返りの素材)", () => {
   const t = buildTemplate();
 
   // 3 つの実験テンプレートとも logConfiguration (CloudWatch Logs) を持つ
   t.resourcePropertiesCountIs(
-    'AWS::FIS::ExperimentTemplate',
+    "AWS::FIS::ExperimentTemplate",
     Match.objectLike({
       LogConfiguration: Match.objectLike({
         // CFN プロパティは PascalCase の LogGroupArn (camelCase だと early validation で弾かれる)
@@ -143,19 +141,19 @@ test('障害注入: 全実験は CloudWatch Logs へ実験ログを残す (振�
   );
 });
 
-test('障害注入2: FIS は Aurora クラスターをフェイルオーバーする', () => {
+test("障害注入2: FIS は Aurora クラスターをフェイルオーバーする", () => {
   const t = buildTemplate();
 
   // ECS stop / RDS failover / ECS scale-to-zero の 3 つの実験テンプレートがある
-  t.resourceCountIs('AWS::FIS::ExperimentTemplate', 3);
-  t.hasResourceProperties('AWS::FIS::ExperimentTemplate', {
+  t.resourceCountIs("AWS::FIS::ExperimentTemplate", 3);
+  t.hasResourceProperties("AWS::FIS::ExperimentTemplate", {
     Actions: Match.objectLike({
-      Failover: Match.objectLike({ ActionId: 'aws:rds:failover-db-cluster' }),
+      Failover: Match.objectLike({ ActionId: "aws:rds:failover-db-cluster" }),
     }),
     Targets: Match.objectLike({
       Clusters: Match.objectLike({
-        ResourceType: 'aws:rds:cluster',
-        SelectionMode: 'ALL',
+        ResourceType: "aws:rds:cluster",
+        SelectionMode: "ALL",
         // 安定リソース (deploy 時に ARN 確定) はタグでなく ARN 名指し (規約)。
         // ALL でも対象はこの 1 クラスタに限定される
         ResourceArns: [Match.anyValue()],
@@ -164,13 +162,13 @@ test('障害注入2: FIS は Aurora クラスターをフェイルオーバー�
   });
 });
 
-test('障害注入: 全実験は実験レポート (PDF) を S3 に出す (振り返りの素材)', () => {
+test("障害注入: 全実験は実験レポート (PDF) を S3 に出す (振り返りの素材)", () => {
   const t = buildTemplate();
 
   // 3 実験とも experimentReportConfiguration を持ち、振り返りダッシュボードの
   // スナップショット付きレポートを S3 に配信する (logConfiguration とは別物: ログ=詳細、レポート=サマリ)
   t.resourcePropertiesCountIs(
-    'AWS::FIS::ExperimentTemplate',
+    "AWS::FIS::ExperimentTemplate",
     Match.objectLike({
       ExperimentReportConfiguration: Match.objectLike({
         Outputs: Match.objectLike({
@@ -185,46 +183,46 @@ test('障害注入: 全実験は実験レポート (PDF) を S3 に出す (振�
   );
 });
 
-test('障害遅延: faultDelayMinutes を渡すと全実験の先頭に aws:fis:wait が入る', () => {
+test("障害遅延: faultDelayMinutes を渡すと全実験の先頭に aws:fis:wait が入る", () => {
   const app = new cdk.App({ context: { faultDelayMinutes: 5 } });
-  const t = Template.fromStack(new GamedayStack(app, 'GameDayDelay'));
+  const t = Template.fromStack(new GamedayStack(app, "GameDayDelay"));
   // 3 実験すべてに Wait (PT5M) が入る
   t.resourcePropertiesCountIs(
-    'AWS::FIS::ExperimentTemplate',
+    "AWS::FIS::ExperimentTemplate",
     Match.objectLike({
       Actions: Match.objectLike({
-        Wait: Match.objectLike({ ActionId: 'aws:fis:wait', Parameters: { duration: 'PT5M' } }),
+        Wait: Match.objectLike({ ActionId: "aws:fis:wait", Parameters: { duration: "PT5M" } }),
       }),
     }),
     3,
   );
 });
 
-test('障害遅延: デフォルト (context 無し) は wait を入れない', () => {
+test("障害遅延: デフォルト (context 無し) は wait を入れない", () => {
   const t = buildTemplate();
   t.resourcePropertiesCountIs(
-    'AWS::FIS::ExperimentTemplate',
+    "AWS::FIS::ExperimentTemplate",
     Match.objectLike({ Actions: Match.objectLike({ Wait: Match.anyValue() }) }),
     0,
   );
 });
 
-test('障害遅延: 範囲外 (720 分超) は synth 時に弾く', () => {
+test("障害遅延: 範囲外 (720 分超) は synth 時に弾く", () => {
   const app = new cdk.App({ context: { faultDelayMinutes: 1000 } });
-  expect(() => new GamedayStack(app, 'GameDayBadDelay')).toThrow(/faultDelayMinutes/);
+  expect(() => new GamedayStack(app, "GameDayBadDelay")).toThrow(/faultDelayMinutes/);
 });
 
 test('障害遅延: 範囲 ("5-15") を context で渡すと全実験に PT5〜15M の wait が入る', () => {
-  const app = new cdk.App({ context: { faultDelayMinutes: '5-15' } });
-  const t = Template.fromStack(new GamedayStack(app, 'GameDayRandomDelay'));
+  const app = new cdk.App({ context: { faultDelayMinutes: "5-15" } });
+  const t = Template.fromStack(new GamedayStack(app, "GameDayRandomDelay"));
   // 値は乱数なので正確な分数は固定せず、範囲内であることだけを固定する
   t.resourcePropertiesCountIs(
-    'AWS::FIS::ExperimentTemplate',
+    "AWS::FIS::ExperimentTemplate",
     Match.objectLike({
       Actions: Match.objectLike({
         Wait: Match.objectLike({
-          ActionId: 'aws:fis:wait',
-          Parameters: { duration: Match.stringLikeRegexp('^PT([5-9]|1[0-5])M$') },
+          ActionId: "aws:fis:wait",
+          Parameters: { duration: Match.stringLikeRegexp("^PT([5-9]|1[0-5])M$") },
         }),
       }),
     }),
@@ -232,178 +230,179 @@ test('障害遅延: 範囲 ("5-15") を context で渡すと全実験に PT5〜1
   );
 });
 
-test('障害注入5 (対応ラウンド): scale-to-zero は SSM Automation で desiredCount=0 を実行する', () => {
+test("障害注入5 (対応ラウンド): scale-to-zero は SSM Automation で desiredCount=0 を実行する", () => {
   const t = buildTemplate();
 
   // SSM Automation ドキュメント (ecs:UpdateService desiredCount=0) が生成される
-  t.hasResourceProperties('AWS::SSM::Document', {
-    DocumentType: 'Automation',
+  t.hasResourceProperties("AWS::SSM::Document", {
+    DocumentType: "Automation",
     Content: Match.objectLike({
       mainSteps: Match.arrayWith([
         Match.objectLike({
-          action: 'aws:executeAwsApi',
-          inputs: Match.objectLike({ Service: 'ecs', Api: 'UpdateService', desiredCount: 0 }),
+          action: "aws:executeAwsApi",
+          inputs: Match.objectLike({ Service: "ecs", Api: "UpdateService", desiredCount: 0 }),
         }),
       ]),
     }),
   });
   // FIS 実験は aws:ssm:start-automation-execution を呼ぶ
-  t.hasResourceProperties('AWS::FIS::ExperimentTemplate', {
+  t.hasResourceProperties("AWS::FIS::ExperimentTemplate", {
     Actions: Match.objectLike({
       ScaleToZero: Match.objectLike({
-        ActionId: 'aws:ssm:start-automation-execution',
-        Parameters: Match.objectLike({ maxDuration: 'PT1M' }),
+        ActionId: "aws:ssm:start-automation-execution",
+        Parameters: Match.objectLike({ maxDuration: "PT1M" }),
       }),
     }),
   });
 });
 
-test('障害注入5: FIS ロールは SSM automation マネージドポリシー + PassRole を持ち、ecs を直接叩く権限は持たない', () => {
+test("障害注入5: FIS ロールは SSM automation マネージドポリシー + PassRole を持ち、ecs を直接叩く権限は持たない", () => {
   const t = buildTemplate();
 
   // scale-to-zero の FIS ロールは SSM automation 用マネージドポリシーを付ける
-  const roles = t.findResources('AWS::IAM::Role');
-  const ssmRole = Object.entries(roles).find(([name]) => name.includes('FisSsmRole'));
+  const roles = t.findResources("AWS::IAM::Role");
+  const ssmRole = Object.entries(roles).find(([name]) => name.includes("FisSsmRole"));
   expect(ssmRole).toBeDefined();
-  expect(JSON.stringify(ssmRole?.[1].Properties)).toContain('AWSFaultInjectionSimulatorSSMAccess');
+  expect(JSON.stringify(ssmRole?.[1].Properties)).toContain("AWSFaultInjectionSimulatorSSMAccess");
 
   // インライン側は automation ロールを渡す iam:PassRole を持ち、ecs は直接叩かない
-  const policies = t.findResources('AWS::IAM::Policy');
-  const ssmPolicy = Object.entries(policies).find(([name]) => name.includes('FisSsmRole'));
+  const policies = t.findResources("AWS::IAM::Policy");
+  const ssmPolicy = Object.entries(policies).find(([name]) => name.includes("FisSsmRole"));
   expect(ssmPolicy).toBeDefined();
   const doc = JSON.stringify(ssmPolicy?.[1].Properties);
-  expect(doc).toContain('iam:PassRole');
+  expect(doc).toContain("iam:PassRole");
   // FIS ロール自身は ecs:UpdateService を持たない (それは automation ロール側)
-  expect(doc).not.toContain('ecs:UpdateService');
+  expect(doc).not.toContain("ecs:UpdateService");
 });
 
-test('障害注入5: backstop が実験終了イベントで起動し、30 分後に desiredCount を定義値へ戻す', () => {
+test("障害注入5: backstop が実験終了イベントで起動し、30 分後に desiredCount を定義値へ戻す", () => {
   const t = buildTemplate();
 
   // 実験テンプレート内の wait+復元にしない (待機中の停止条件発火で復元ごと失われる) ので、
   // 実験の外の EventBridge → Step Functions が保険になっていることを固定する
-  t.resourceCountIs('AWS::StepFunctions::StateMachine', 1);
+  t.resourceCountIs("AWS::StepFunctions::StateMachine", 1);
   // completed だけでなく stopped/failed でも起動する (障害が残ったまま実験だけ終わるケース)
-  t.hasResourceProperties('AWS::Events::Rule', {
+  t.hasResourceProperties("AWS::Events::Rule", {
     EventPattern: Match.objectLike({
-      'source': ['aws.fis'],
-      'detail-type': ['FIS Experiment State Change'],
-      'detail': Match.objectLike({
-        'new-state': { status: ['completed', 'stopped', 'failed'] },
+      source: ["aws.fis"],
+      "detail-type": ["FIS Experiment State Change"],
+      detail: Match.objectLike({
+        "new-state": { status: ["completed", "stopped", "failed"] },
       }),
     }),
     Targets: Match.arrayWith([
-      Match.objectLike({ Arn: Match.objectLike({ Ref: Match.stringLikeRegexp('ScaleToZeroBackstop') }) }),
+      Match.objectLike({
+        Arn: Match.objectLike({ Ref: Match.stringLikeRegexp("ScaleToZeroBackstop") }),
+      }),
     ]),
   });
   // 30 分待機 + 復元値 (TargetApp の desiredCount=2) が定義に流れ込んでいる
   // (DefinitionString は JSON 文字列なので stringify 上は引用符がエスケープされる)
-  const sfnDef = JSON.stringify(t.findResources('AWS::StepFunctions::StateMachine'));
+  const sfnDef = JSON.stringify(t.findResources("AWS::StepFunctions::StateMachine"));
   expect(sfnDef).toContain('\\"Seconds\\":1800');
   expect(sfnDef).toContain('\\"DesiredCount\\":2');
   // 参加者が既に復旧していれば触らない (0 のときだけ戻す)
-  expect(sfnDef).toContain('$.describe.Services[0].DesiredCount');
+  expect(sfnDef).toContain("$.describe.Services[0].DesiredCount");
 });
 
-test('S3: canary 成果物バケットだけライフサイクル (7 日失効) を持つ (周回運用で溜め込まない)', () => {
+test("S3: canary 成果物バケットだけライフサイクル (7 日失効) を持つ (周回運用で溜め込まない)", () => {
   const t = buildTemplate();
 
   t.resourcePropertiesCountIs(
-    'AWS::S3::Bucket',
+    "AWS::S3::Bucket",
     Match.objectLike({
       LifecycleConfiguration: {
-        Rules: [Match.objectLike({ ExpirationInDays: 7, Status: 'Enabled' })],
+        Rules: [Match.objectLike({ ExpirationInDays: 7, Status: "Enabled" })],
       },
     }),
     1,
   );
 });
 
-test('障害遅延: 範囲指定は実験テンプレートごとに独立に乱数を引く', () => {
+test("障害遅延: 範囲指定は実験テンプレートごとに独立に乱数を引く", () => {
   // 乱数を注入して決定的に検証する (GamedayStack 全合成は重いので construct 単体で)
   const app = new cdk.App();
-  const stack = new cdk.Stack(app, 'DelayOnly');
+  const stack = new cdk.Stack(app, "DelayOnly");
   const draws = [0, 0.9999]; // 1 回目 = stopTask、2 回目 = failover (3 回目 scaleToZero は既定 0)
-  new FaultInjection(stack, 'Fi', {
+  new FaultInjection(stack, "Fi", {
     stopAlarm: cloudwatch.Alarm.fromAlarmArn(
       stack,
-      'StopAlarm',
-      'arn:aws:cloudwatch:ap-northeast-1:123456789012:alarm:gameday-5xx',
+      "StopAlarm",
+      "arn:aws:cloudwatch:ap-northeast-1:123456789012:alarm:gameday-5xx",
     ),
-    targetTagKey: 'GameDayTarget',
-    targetTagValue: 'true',
-    databaseCluster: rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, 'Db', {
-      clusterIdentifier: 'gameday-db',
+    targetTagKey: "GameDayTarget",
+    targetTagValue: "true",
+    databaseCluster: rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, "Db", {
+      clusterIdentifier: "gameday-db",
     }),
     cluster: ecs.Cluster.fromClusterArn(
       stack,
-      'Cluster',
-      'arn:aws:ecs:ap-northeast-1:123456789012:cluster/gameday',
+      "Cluster",
+      "arn:aws:ecs:ap-northeast-1:123456789012:cluster/gameday",
     ),
     service: ecs.FargateService.fromFargateServiceArn(
       stack,
-      'Svc',
-      'arn:aws:ecs:ap-northeast-1:123456789012:service/gameday/app',
+      "Svc",
+      "arn:aws:ecs:ap-northeast-1:123456789012:service/gameday/app",
     ),
     serviceDesiredCount: 2,
-    reviewDashboardArn:
-      'arn:aws:cloudwatch::123456789012:dashboard/gameday-review',
-    faultDelayMinutes: '5-15',
+    reviewDashboardArn: "arn:aws:cloudwatch::123456789012:dashboard/gameday-review",
+    faultDelayMinutes: "5-15",
     random: () => draws.shift() ?? 0,
   });
   const t = Template.fromStack(stack);
-  t.hasResourceProperties('AWS::FIS::ExperimentTemplate', {
+  t.hasResourceProperties("AWS::FIS::ExperimentTemplate", {
     Actions: Match.objectLike({
       StopTask: Match.anyValue(),
-      Wait: Match.objectLike({ Parameters: { duration: 'PT5M' } }),
+      Wait: Match.objectLike({ Parameters: { duration: "PT5M" } }),
     }),
   });
-  t.hasResourceProperties('AWS::FIS::ExperimentTemplate', {
+  t.hasResourceProperties("AWS::FIS::ExperimentTemplate", {
     Actions: Match.objectLike({
       Failover: Match.anyValue(),
-      Wait: Match.objectLike({ Parameters: { duration: 'PT15M' } }),
+      Wait: Match.objectLike({ Parameters: { duration: "PT15M" } }),
     }),
   });
 });
 
-test('スコアエスカレーション: DynamoDB(Streams) → Lambda → FIS 発火の配線がある', () => {
+test("スコアエスカレーション: DynamoDB(Streams) → Lambda → FIS 発火の配線がある", () => {
   const t = buildTemplate();
 
   // スコア置き場。TableV2 は GlobalTable として合成される。Streams(NEW_IMAGE)が Lambda を駆動
-  t.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
-    TableName: 'gameday-score',
-    StreamSpecification: { StreamViewType: 'NEW_IMAGE' },
+  t.hasResourceProperties("AWS::DynamoDB::GlobalTable", {
+    TableName: "gameday-score",
+    StreamSpecification: { StreamViewType: "NEW_IMAGE" },
   });
   // エスカレーション Lambda は最新ランタイムで TRIGGERS を持つ
-  t.hasResourceProperties('AWS::Lambda::Function', {
-    Runtime: 'nodejs24.x',
+  t.hasResourceProperties("AWS::Lambda::Function", {
+    Runtime: "nodejs24.x",
     Environment: Match.objectLike({ Variables: Match.objectLike({ TRIGGERS: Match.anyValue() }) }),
   });
   // イベントソースは SCORE アイテムの INSERT/MODIFY だけに絞る (無駄起動と再帰を防ぐ)
-  t.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+  t.hasResourceProperties("AWS::Lambda::EventSourceMapping", {
     FilterCriteria: {
-      Filters: Match.arrayWith([{ Pattern: Match.stringLikeRegexp('SCORE') }]),
+      Filters: Match.arrayWith([{ Pattern: Match.stringLikeRegexp("SCORE") }]),
     },
   });
   // Lambda ロールに FIS 実験の開始 + タグ付け権限 (tags 付き StartExperiment は両方要る)
-  t.hasResourceProperties('AWS::IAM::Policy', {
+  t.hasResourceProperties("AWS::IAM::Policy", {
     PolicyDocument: Match.objectLike({
       Statement: Match.arrayWith([
-        Match.objectLike({ Action: ['fis:StartExperiment', 'fis:TagResource'] }),
+        Match.objectLike({ Action: ["fis:StartExperiment", "fis:TagResource"] }),
       ]),
     }),
   });
 });
 
-test('スコアエスカレーション: 閾値と実験IDが Lambda 環境変数 (TRIGGERS) に入る', () => {
+test("スコアエスカレーション: 閾値と実験IDが Lambda 環境変数 (TRIGGERS) に入る", () => {
   // 実 ID はトークンになり CFN 上 Fn::Join に化けるので、単体では素の文字列で検証する
   const app = new cdk.App();
-  const stack = new cdk.Stack(app, 'EscOnly');
-  new ScoreEscalation(stack, 'Esc', {
-    triggers: [{ id: 't1', atScore: 250, experimentTemplateId: 'EXTexample', label: 'x' }],
+  const stack = new cdk.Stack(app, "EscOnly");
+  new ScoreEscalation(stack, "Esc", {
+    triggers: [{ id: "t1", atScore: 250, experimentTemplateId: "EXTexample", label: "x" }],
   });
   const t = Template.fromStack(stack);
-  t.hasResourceProperties('AWS::Lambda::Function', {
+  t.hasResourceProperties("AWS::Lambda::Function", {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         TRIGGERS: Match.stringLikeRegexp('"atScore":250.*"experimentTemplateId":"EXTexample"'),
@@ -412,59 +411,65 @@ test('スコアエスカレーション: 閾値と実験IDが Lambda 環境変�
   });
 });
 
-test('スコアエスカレーション: trigger 空は設定ミスとして弾く', () => {
+test("スコアエスカレーション: trigger 空は設定ミスとして弾く", () => {
   const app = new cdk.App();
-  const stack = new cdk.Stack(app, 'EscEmpty');
-  expect(() => new ScoreEscalation(stack, 'Esc', { triggers: [] })).toThrow(/trigger/);
+  const stack = new cdk.Stack(app, "EscEmpty");
+  expect(() => new ScoreEscalation(stack, "Esc", { triggers: [] })).toThrow(/trigger/);
 });
 
-test('ゲームイベント記録: アラーム遷移と FIS 状態遷移が同じ Lambda に配線される', () => {
+test("ゲームイベント記録: アラーム遷移と FIS 状態遷移が同じ Lambda に配線される", () => {
   const t = buildTemplate();
 
   // ルール1: canary ヘルスアラームの ALARM/OK だけ (INSUFFICIENT_DATA は捨てる)
-  t.hasResourceProperties('AWS::Events::Rule', {
+  t.hasResourceProperties("AWS::Events::Rule", {
     EventPattern: Match.objectLike({
-      'source': ['aws.cloudwatch'],
-      'detail-type': ['CloudWatch Alarm State Change'],
-      'resources': [Match.objectLike({ 'Fn::GetAtt': Match.arrayWith([Match.stringLikeRegexp('SlackNotifyCanaryHealth')]) })],
-      'detail': { state: { value: ['ALARM', 'OK'] } },
+      source: ["aws.cloudwatch"],
+      "detail-type": ["CloudWatch Alarm State Change"],
+      resources: [
+        Match.objectLike({
+          "Fn::GetAtt": Match.arrayWith([Match.stringLikeRegexp("SlackNotifyCanaryHealth")]),
+        }),
+      ],
+      detail: { state: { value: ["ALARM", "OK"] } },
     }),
   });
   // ルール2: GameDay の実験テンプレートに限った FIS 状態遷移
-  t.hasResourceProperties('AWS::Events::Rule', {
+  t.hasResourceProperties("AWS::Events::Rule", {
     EventPattern: Match.objectLike({
-      'source': ['aws.fis'],
-      'detail-type': ['FIS Experiment State Change'],
-      'detail': Match.objectLike({
-        'new-state': { status: ['running', 'completed', 'stopped', 'failed'] },
+      source: ["aws.fis"],
+      "detail-type": ["FIS Experiment State Change"],
+      detail: Match.objectLike({
+        "new-state": { status: ["running", "completed", "stopped", "failed"] },
       }),
     }),
   });
   // 両ルールとも同一の記録 Lambda をターゲットにする (backstop 用ルールは別系統なので除く)
-  const rules = t.findResources('AWS::Events::Rule');
+  const rules = t.findResources("AWS::Events::Rule");
   const targetArns = Object.entries(rules)
-    .filter(([name]) => name.includes('GameEvents'))
-    .map(([, r]) => JSON.stringify((r.Properties as { Targets: { Arn: unknown }[] }).Targets[0].Arn));
+    .filter(([name]) => name.includes("GameEvents"))
+    .map(([, r]) =>
+      JSON.stringify((r.Properties as { Targets: { Arn: unknown }[] }).Targets[0].Arn),
+    );
   expect(targetArns).toHaveLength(2);
   expect(targetArns[0]).toBe(targetArns[1]);
   expect(targetArns[0]).toMatch(/GameEventsRecorder/);
 });
 
-test('ゲームイベント記録: Lambda はテーブル書き込みのみで FIS 権限を持たない', () => {
+test("ゲームイベント記録: Lambda はテーブル書き込みのみで FIS 権限を持たない", () => {
   const t = buildTemplate();
 
   // 記録 Lambda のロールポリシー: DynamoDB 書き込み系はあるが fis:* は無い
-  const policies = t.findResources('AWS::IAM::Policy');
+  const policies = t.findResources("AWS::IAM::Policy");
   const recorderPolicy = Object.entries(policies).find(([name]) =>
-    name.includes('GameEventsRecorder'),
+    name.includes("GameEventsRecorder"),
   );
   expect(recorderPolicy).toBeDefined();
   const statements = JSON.stringify(recorderPolicy?.[1].Properties);
-  expect(statements).toContain('dynamodb:PutItem');
-  expect(statements).not.toContain('fis:');
+  expect(statements).toContain("dynamodb:PutItem");
+  expect(statements).not.toContain("fis:");
   // 環境変数でテーブル名を受け取る。取りこぼしは DLQ に残す (非同期呼び出しの失敗 =
   // 採点素材の欠落を黙って捨てない)
-  t.hasResourceProperties('AWS::Lambda::Function', {
+  t.hasResourceProperties("AWS::Lambda::Function", {
     Environment: Match.objectLike({
       Variables: Match.objectLike({ TABLE_NAME: Match.anyValue() }),
     }),
@@ -473,12 +478,14 @@ test('ゲームイベント記録: Lambda はテーブル書き込みのみで F
   });
 });
 
-test('統合の証明: 本体は 1 スタックで、cross-stack Export を作らない', () => {
+test("統合の証明: 本体は 1 スタックで、cross-stack Export を作らない", () => {
   const t = buildTemplate();
   // Strong Reference (Export) が無いこと = 他スタックへ ImportValue で漏れていない
-  t.findOutputs('*', Match.objectLike({ Export: Match.anyValue() }));
-  const exported = Object.values(t.findOutputs('*')).filter((o) => 'Export' in o);
+  t.findOutputs("*", Match.objectLike({ Export: Match.anyValue() }));
+  const exported = Object.values(t.findOutputs("*")).filter((o) => "Export" in o);
   if (exported.length > 0) {
-    throw new Error(`予期しない Export が ${exported.length} 件ある (統合で cross-stack 参照は消えるはず)`);
+    throw new Error(
+      `予期しない Export が ${exported.length} 件ある (統合で cross-stack 参照は消えるはず)`,
+    );
   }
 });
